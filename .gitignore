@@ -1,0 +1,6 @@
+# Ignore Python virtual environment files as they are created individually
+env/
+
+# Ignore Django binaries
+mirrors/mirrors/__pycache__/
+mirrors/webapp/__pycache__

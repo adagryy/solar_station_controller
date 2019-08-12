@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include, url
+from webapp.views import mainView
 
 urlpatterns = [
+    path('', mainView),
     url(r'^viewer/', include('webapp.urls')),
     path('admin/', admin.site.urls),
 ]

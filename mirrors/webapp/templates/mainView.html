@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 	{% load static %}
 	<title>Kontroler</title>
@@ -7,9 +7,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="{% static "css/bootstrap/css/bootstrap.min.css" %}">
 	<link rel="stylesheet" href="{% static "css/open-iconic/open-iconic-bootstrap.min.css" %}">
+	<link rel="stylesheet" href="{% static "css/bootstrap-toogle/css/bootstrap4-toggle.min.css" %}">
 	<link rel="stylesheet" href="{% static "css/myStyle.css" %}">
 	<script src="{% static "js/jquery-3.4.1.min.js" %}"></script>
 	<script src="{% static "css/bootstrap/js/bootstrap.min.js" %}"></script>	
+	<script src="{% static "js/bootstrap4-toggle.min.js" %}"></script>	
 </head>
 	<body>
 	    <nav class="navbar navbar-expand-md bg-primary navbar-dark">
@@ -21,17 +23,17 @@
 	            <ul class="navbar-nav">
 	            	{% if request.user.is_authenticated %}
 	                <li class="nav-item">
-	                    <a class="nav-link" href="#">Parametry</a>
+	                    <a class="nav-link" href="{% url 'parameters' %}">Parametry</a>
 	                </li>
 	                <li class="nav-item">
-	                    <a class="nav-link" href="#">Zarządzanie</a>
+	                    <a class="nav-link" href="{% url 'management' %}">Zarządzanie</a>
 	                </li>
 	                {% endif %}
 	            </ul>
 	            {% if not shouldDisableLoginButton %}
 	            <ul class="navbar-nav ml-auto">
 	            	{% if not request.user.is_authenticated %}
-				    <li class="nav-item"><a class="whiteColor" href="{% url 'loginuser' %}"><span class="oi oi-account-login"></span></span> Login</a></li>
+				    <li class="nav-item"><a class="whiteColor" href="{% url 'loginuser' %}"><span class="oi oi-account-login"></span></span> Zaloguj się</a></li>
 	            	{% elif request.user.is_authenticated %}
 	            	<!-- <li class="nav-item"><a class="whiteColor" href="{% url 'logoutuser' %}">{{request.user.username}}, Wyloguj <span class="oi oi-account-logout"></span></span> </a></li> -->
 	            	<li class="nav-item"><a class="whiteColor" href="{% url 'logoutuser' %}">Wyloguj <span class="oi oi-account-logout"></span></span> </a></li>

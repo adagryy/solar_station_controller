@@ -4,10 +4,23 @@ from .formsDefinition.forms import LoginForm
 import logging
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-# Create your views here.
+
+@login_required
+def parameters(request):
+    return render(request, 'viewer/parameters.html', {})	
+
+@login_required
+def mirrormanagement(request):
+    return render(request, 'management/management.html', {})
+
+
+# --------------------
+# User authentication
+# --------------------
 def index(request):
     return render(request, 'viewer/index.html', {}) 
 def mainView(request):    
@@ -15,7 +28,7 @@ def mainView(request):
 def login_user(request):
     shouldDisableLoginButton = True
     if request.method == 'GET':
-        return render(request, 'viewer/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton})
+        return render(request, 'accounts/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton})
     if request.method == 'POST':
         MyLoginForm = LoginForm(request.POST) 
         if MyLoginForm.is_valid():
@@ -25,7 +38,7 @@ def login_user(request):
             # Check, if user was exists in database
             if not User.objects.filter(email=emailFromForm).exists():
             	# If user was not found, then...
-                return render(request, 'viewer/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Błędne dane logowania.'})
+                return render(request, 'accounts/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Błędne dane logowania.'})
                         # We are looking for a user in database by email
             # Get user data (get username)                        
             databaseuser = User.objects.get(email=emailFromForm)
@@ -35,13 +48,13 @@ def login_user(request):
             if authenticatedUser is not None:
                 logger.info("User authenticated: " + str(authenticatedUser))	
                 login(request, authenticatedUser)
-                return redirect(reverse('index'))
+                return redirect(reverse('mainView'))
             else:
-                return render(request, 'viewer/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Błędne dane logowania.'})
+                return render(request, 'accounts/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Błędne dane logowania.'})
         else:
             logger.info("not valid")	
-            return render(request, 'viewer/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Niepoprawnie wprowadzono dane do formularza logowania.'})
+            return render(request, 'accounts/login.html', {'shouldDisableLoginButton': shouldDisableLoginButton, 'error': 'Niepoprawnie wprowadzono dane do formularza logowania.'})
 
 def logout_user(request):
     logout(request)
-    return redirect(reverse('index'))
+    return redirect(reverse('mainView'))

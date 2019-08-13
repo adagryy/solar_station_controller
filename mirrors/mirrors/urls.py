@@ -19,7 +19,8 @@ from django.conf.urls import include, url
 from webapp.views import mainView
 
 urlpatterns = [
-    path('', mainView),
+    path('', mainView, name='mainView'),
     url(r'^viewer/', include('webapp.urls')),
+    url(r'^accounts/', include('webapp.urlsAccount')),
     path('admin/', admin.site.urls),
 ]

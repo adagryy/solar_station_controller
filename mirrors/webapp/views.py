@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .formsDefinition.forms import LoginForm
+from .formsDefinition.forms import LoginForm, ManagementForm
 import logging
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+import redis
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -15,8 +16,36 @@ def parameters(request):
 
 @login_required
 def mirrormanagement(request):
-    return render(request, 'management/management.html', {})
+    redisDbReference = redis.Redis(host='localhost', port=6379, db=0)
+    if request.method == 'POST':
+        managementData = ManagementForm(request.POST)
+        if managementData.is_valid():
+            redisDbReference.set('automatic', str(managementData.cleaned_data['automatic']))
+            redisDbReference.set('other', str(managementData.cleaned_data['other']))         
+            redisDbReference.set('pumpTime', managementData.cleaned_data['pumpTime'])
+            redisDbReference.set('interval', managementData.cleaned_data['interval'])
+            logger.error('Odczy34t: ' + str(managementData.cleaned_data['automatic']))
+            logger.error('Odczyt: ' + str(managementData.cleaned_data['other']))
+            logger.error('Odczyt: ' + str(redisDbReference.get('automatic')))
+            logger.error('Odczyt: ' + str(redisDbReference.get('other')))
+            return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+        else:
+            logger.error(managementData.other.errors)	
+            return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+    elif request.method == 'GET':
+        logger.error('Odczyt: ' + str(redisDbReference.get('automatic').decode('utf-8')))
+        logger.error('Odczyt: ' + str(redisDbReference.get('other').decode('utf-8')))
+        return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+    # return render(request, 'management/management.html', {})
 
+def str_to_bool(s):
+    s = s.decode('utf-8')
+    if s == 'True':
+         return True
+    elif s == 'False':
+         return False
+    else:
+         raise ValueError 
 
 # --------------------
 # User authentication

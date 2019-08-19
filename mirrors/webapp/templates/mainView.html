@@ -2,19 +2,20 @@
 <html lang="pl">
 <head>
 	{% load static %}
-	<title>Kontroler</title>
+	<title>Kontroler luster</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
 	<link rel="stylesheet" href="{% static "css/bootstrap/css/bootstrap.min.css" %}">
 	<link rel="stylesheet" href="{% static "css/open-iconic/open-iconic-bootstrap.min.css" %}">
 	<link rel="stylesheet" href="{% static "css/bootstrap-toogle/css/bootstrap4-toggle.min.css" %}">
 	<link rel="stylesheet" href="{% static "css/myStyle.css" %}">
 	<script src="{% static "js/jquery-3.4.1.min.js" %}"></script>
 	<script src="{% static "css/bootstrap/js/bootstrap.min.js" %}"></script>	
-	<script src="{% static "js/bootstrap4-toggle.min.js" %}"></script>	
+	<script src="{% static "js/bootstrap4-toggle.min.js" %}"></script>		
 </head>
 	<body>
-	    <nav class="navbar navbar-expand-md bg-primary navbar-dark">
+	    <nav class="navbar navbar-expand-md bg-dark navbar-dark">
 	        <a class="navbar-brand" href="/">Kontroler</a>
 	        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
 	            <span class="navbar-toggler-icon"></span>
@@ -43,8 +44,8 @@
 	        </div>
 	    </nav>
 	    <div class="container">
-		  	{% block content %}
-            {% endblock %}
-		</div>
-	</body>
+		  	{% block content %}{% endblock %}
+            {% block scripts %}{% endblock %}
+		</div>		
+	</body>	
 </html>

@@ -28,10 +28,9 @@ def mirrormanagement(request):
             logger.error('Odczyt: ' + str(managementData.cleaned_data['other']))
             logger.error('Odczyt: ' + str(redisDbReference.get('automatic')))
             logger.error('Odczyt: ' + str(redisDbReference.get('other')))
-            return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+            return render(request, 'management/management.html', {'form': managementData, 'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
         else:
-            logger.error(managementData.other.errors)	
-            return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+            return render(request, 'management/management.html', {'form': managementData, 'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
     elif request.method == 'GET':
         logger.error('Odczyt: ' + str(redisDbReference.get('automatic').decode('utf-8')))
         logger.error('Odczyt: ' + str(redisDbReference.get('other').decode('utf-8')))

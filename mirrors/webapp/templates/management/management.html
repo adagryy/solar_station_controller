@@ -1,10 +1,10 @@
 {% extends "mainView.html" %}
 {% block content %}
+<br>
+<hr style="margin-bottom:5px !important; margin-top:5px !important; " />
 <h2>Zarządzanie pracą</h2>
 <form action="/viewer/management/" method="post">
   {% csrf_token %}
-  {{automatic}}
-  {{other}}
   <div class="form-group">
     <label class="form-check-label">
       <input id="automatic" name="automatic" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if automatic %}checked="checked"{% endif %}>  Sterowanie automatyczne
@@ -16,38 +16,63 @@
     </label>
   </div>
   <div class="form-group">
-    <label for="pumpTime">Czas jednostkowego działania pompki</label>
+    <label for="pumpTime">Czas jednostkowego działania pompki (0-300 sekund)</label>
     <input id="pumpTime" name="pumpTime" type="number" class="form-control" aria-describedby="emailHelp" placeholder="Czas (w sekundach)" value="{{pumpTime}}">
+    {% if form.pumpTime.errors %}
+      {% for error in form.pumpTime.errors %}
+          <small class="text-danger">{{ error }}</small>
+      {% endfor %}
+    {% endif %}
   </div>
   <div class="form-group">
-    <label for="interval">Interwał czasowy odczytu temperatury</label>
+    <label for="interval">Interwał czasowy odczytu temperatury (0-300 sekund)</label>
     <input id="interval" name="interval" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{interval}}">
+    {% if form.interval.errors %}
+      {% for error in form.interval.errors %}
+          <small class="text-danger">{{ error }}</small>
+      {% endfor %}
+    {% endif %}
   </div>
   <button type="submit" class="btn btn-danger">Zastosuj zmiany</button>
 </form>
+<br>
+<hr style="margin-bottom:5px !important; margin-top:5px !important; " />
 <script>
   $(document).ready(function(){
     $("#automatic").bootstrapToggle()
+    rearrangeReadonlyFields(document.getElementById("automatic").checked)
     $("#automatic").change(function(){
-      if (!!document.getElementById("automatic").checked) {        
-        $("#interval").prop("disabled", false);
-        $("#pumpTime").prop("disabled", false);
-        $("#other").attr("data-onstyle", "light");
-        $("#other").attr("data-offstyle", "light");
-        $('#other').bootstrapToggle('off')
-        $('#other').bootstrapToggle('disable')        
-        $("#other").bootstrapToggle('destroy')
-        $("#other").bootstrapToggle()
-      } else if (!document.getElementById("automatic").checked) {
-        $('#other').bootstrapToggle('enable')
-        $("#interval").prop("disabled", true);
-        $("#pumpTime").prop("disabled", true);        
-        $("#other").attr("data-onstyle", "danger");
-        $("#other").attr("data-offstyle", "success");
-        $("#other").bootstrapToggle('destroy')
-        $("#other").bootstrapToggle()
-      }
+      rearrangeReadonlyFields(document.getElementById("automatic").checked);
     })
   });
+
+  function rearrangeReadonlyFields(isAuto) {
+    if (!!isAuto) {        
+      $("#interval").removeAttr("readonly");
+      $("#interval").removeAttr("onFocus");
+      document.getElementById("interval").style.cursor = "text";
+      $("#pumpTime").removeAttr("readonly"); 
+      $("#pumpTime").removeAttr("onFocus"); 
+      document.getElementById("pumpTime").style.cursor = "text";
+      $("#other").attr("data-onstyle", "light");
+      $("#other").attr("data-offstyle", "light");
+      $('#other').bootstrapToggle('off')
+      $('#other').bootstrapToggle('disable')        
+      $("#other").bootstrapToggle('destroy')
+      $("#other").bootstrapToggle()
+    } else if (!isAuto) {
+      $('#other').bootstrapToggle('enable')
+      $("#interval").attr("readonly", "");
+      $("#interval").attr("onFocus", "this.blur()")
+      document.getElementById("interval").style.cursor = "not-allowed";
+      $("#pumpTime").attr("readonly", ""); 
+      $("#pumpTime").attr("onFocus", "this.blur()")
+      document.getElementById("pumpTime").style.cursor = "not-allowed";       
+      $("#other").attr("data-onstyle", "danger");
+      $("#other").attr("data-offstyle", "success");
+      $("#other").bootstrapToggle('destroy')
+      $("#other").bootstrapToggle()
+    }
+  }
 </script>
 {% endblock %}

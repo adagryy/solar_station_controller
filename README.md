@@ -45,9 +45,9 @@ Enter virtual environment:
 	
 	$ source env/bin/activate
  
-Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database)
+Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis)
 	
-	$ pip3 install Django Daphne Redis psycopg2
+	$ pip3 install Django Daphne Redis psycopg2 channels channels_redis
 
 Copy source code of application from this repository to <your_app_path>
 

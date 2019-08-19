@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['127.0.0.1']
 
 INSTALLED_APPS = [
     'webapp',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -68,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mirrors.wsgi.application'
+# WSGI_APPLICATION = 'mirrors.wsgi.application'
 ASGI_APPLICATION = 'mirrors.routing.application'
 CHANNEL_LAYERS = {
     'default': {

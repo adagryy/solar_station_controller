@@ -16,6 +16,15 @@
     </label>
   </div>
   <div class="form-group">
+    <label for="pumpLaunchingTemperature">Temperatura załączenia pompki (0-100&#8451;)</label>
+    <input id="pumpLaunchingTemperature" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{pumpLaunchingTemperature}}">
+    {% if form.pumpLaunchingTemperature.errors %}
+      {% for error in form.pumpLaunchingTemperature.errors %}
+          <small class="text-danger">{{ error }}</small>
+      {% endfor %}
+    {% endif %}
+  </div>
+  <div class="form-group">
     <label for="pumpTime">Czas jednostkowego działania pompki (0-300 sekund)</label>
     <input id="pumpTime" name="pumpTime" type="number" class="form-control" aria-describedby="emailHelp" placeholder="Czas (w sekundach)" value="{{pumpTime}}">
     {% if form.pumpTime.errors %}
@@ -46,6 +55,7 @@
     })
   });
 
+  // Function below needs to be redesigned - it looks horrible!
   function rearrangeReadonlyFields(isAuto) {
     if (!!isAuto) {        
       $("#interval").removeAttr("readonly");
@@ -54,6 +64,9 @@
       $("#pumpTime").removeAttr("readonly"); 
       $("#pumpTime").removeAttr("onFocus"); 
       document.getElementById("pumpTime").style.cursor = "text";
+      $("#pumpLaunchingTemperature").removeAttr("readonly"); 
+      $("#pumpLaunchingTemperature").removeAttr("onFocus"); 
+      document.getElementById("pumpLaunchingTemperature").style.cursor = "text";
       $("#other").attr("data-onstyle", "light");
       $("#other").attr("data-offstyle", "light");
       $('#other').bootstrapToggle('off')
@@ -67,7 +80,10 @@
       document.getElementById("interval").style.cursor = "not-allowed";
       $("#pumpTime").attr("readonly", ""); 
       $("#pumpTime").attr("onFocus", "this.blur()")
-      document.getElementById("pumpTime").style.cursor = "not-allowed";       
+      document.getElementById("pumpTime").style.cursor = "not-allowed";
+      $("#pumpLaunchingTemperature").attr("readonly", ""); 
+      $("#pumpLaunchingTemperature").attr("onFocus", "this.blur()")
+      document.getElementById("pumpLaunchingTemperature").style.cursor = "not-allowed";   
       $("#other").attr("data-onstyle", "danger");
       $("#other").attr("data-offstyle", "success");
       $("#other").bootstrapToggle('destroy')

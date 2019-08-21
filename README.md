@@ -4,33 +4,15 @@ At the beginning you should configure app with correct access credentials to the
 	$ export SECRETKEY="your_secret_key"
 
 You can also do it in various other ways like placing these commands in /etc/profile, /etc/environment systemd definition file (production).
-Below is the example of systemd configuration for automatic management (especially start on system boot) of Daphne server:
-
-	[Unit]
-	Description=Daphne ASGI Server
-	After=network.target
-
-	[Service]
-	PIDFile=/run/daphne/pid
-	Type=simple
-	User=root
-	Group=root
-	WorkingDirectory=/<you_app_path>/mirrorcontroller/mirrors/
-	ExecStart=/<your_app_path>/mirrorcontroller/env/bin/python3 /<your_app_path>/mirrorcontroller/env/bin/daphne mirrors.asgi:application
-	ExecStop=/bin/kill -s TERM $MAINPID
-	Restart=on-abort
-	PrivateTmp=true
-	EnvironmentFile=/<your_app_path>/mirrorcontroller/credentials	
-
-	[Install]
-	WantedBy=multi-user.target
+Examples of systemd configuration file for automatic management are in "config" directory.
+You should place systemd configuration file in /lib/systemd/system/ directory in your Linux system (Ubuntu).
 
 Next you should install database engines:
 	
 	$ apt install postgresql-11
 	$ apt install redis-server
 
-After installing database engines you should configure PostgreSQL database according to the Django app settings:
+After installing database engines you should configure PostgreSQL database according to the Django app settings in settings.py:
 
 	create database solar;
 	create user solar with password 'yourpassword';

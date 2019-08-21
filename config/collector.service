@@ -1,0 +1,19 @@
+# It is a systemd configuration file for managing solar station pump. 
+# The pump is enabled by collector.py script when temperature on solar absorber rises to the certain level.
+# The temperature is measured by set of sensors in collector.py script
+
+[Unit]
+Description=Service for managing solar pump using temperature sensors
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/bin/python3 /<you_app_path>/collector.py
+StandardInput=tty-force
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+# Systemd configuration file for managing Daphne (an ASGI server) for serving Django application
+# which is the main tool for configuring a service responsible for pump controlling in solar station. 
+
+[Unit]
+Description=Daphne ASGI Server for running solar management app.
+After=network.target
+
+[Service]
+PIDFile=/run/daphne/pid
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/<you_app_path>/mirrorcontroller/mirrors/
+ExecStart=/<your_app_path>/mirrorcontroller/env/bin/python3 /<your_app_path>/mirrorcontroller/env/bin/daphne mirrors.asgi:application
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=on-abort
+PrivateTmp=true
+EnvironmentFile=/<your_app_path>/mirrorcontroller/credentials	
+
+[Install]
+WantedBy=multi-user.target

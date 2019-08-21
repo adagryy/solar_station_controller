@@ -17,22 +17,22 @@
     <tr class="table-success">
       <th scope="row">1</th>
       <td>Temperatura po lewej</td>
-      <td id="left_sensor_temperature">12</td>
+      <td id="left_sensor_temperature"></td>
     </tr>
     <tr class="table-danger">
       <th scope="row">2</th>
       <td>Temperatura po środku</td>
-      <td id="middle_sensor_temperature">23</td>
+      <td id="middle_sensor_temperature"></td>
     </tr>
     <tr class="table-warning">
       <th scope="row">3</th>
       <td>Temperatura po prawej</td>
-      <td id="right_sensor_temperature">22</td>
+      <td id="right_sensor_temperature"></td>
     </tr>
     <tr class="table-secondary">
       <th scope="row">4</th>
       <td>Temperatura w zbiorniku</td>
-      <td id="tank_sensor_temperature">22</td>
+      <td id="tank_sensor_temperature"></td>
     </tr>
   </tbody>
 </table>
@@ -41,7 +41,8 @@
 {% block scripts %}
   <script>
     $(document).ready(function(){
-      var chatSocket = new WebSocket('ws://' + window.location.host + '/parametersPreview/');
+      let protocol = location.protocol === "https:" ? "wss" : "ws"; // Temporarily autodetect a protocol scheme. In production change it to wss only!!!
+      var chatSocket = new WebSocket(protocol + '://' + window.location.host + '/parametersPreview/');
    
       chatSocket.onmessage = function(e) {
           var data = JSON.parse(e.data);

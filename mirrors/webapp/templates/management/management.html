@@ -34,7 +34,7 @@
     {% endif %}
   </div>
   <div class="form-group">
-    <label for="interval">Interwał czasowy odczytu temperatury (0-300 sekund)</label>
+    <label for="interval">Interwał czasowy odczytu temperatury (0-5 sekund)</label>
     <input id="interval" name="interval" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{interval}}">
     {% if form.interval.errors %}
       {% for error in form.interval.errors %}

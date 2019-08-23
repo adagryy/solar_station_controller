@@ -22,10 +22,8 @@ class ParametersConsumer(WebsocketConsumer):
             )
         
             self.accept()
-            logger.error('Zaakceptowano WebSocket ' + str(self.user.is_authenticated))
         else:
             self.close()
-            logger.error('Odrzucono WebSocket '  + str(self.user.is_authenticated))
 
     def disconnect(self, close_code):
         # Leave room group
@@ -41,11 +39,12 @@ class ParametersConsumer(WebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'right_sensor_temperature': str(self.redisDbReference.get('right_sensor_temperature'), 'utf-8'),
-                'middle_sensor_temperature': str(self.redisDbReference.get('middle_sensor_temperature'), 'utf-8'),
-                'left_sensor_temperature': str(self.redisDbReference.get('left_sensor_temperature'), 'utf-8'),
-                'tank_sensor_temperature': str(self.redisDbReference.get('tank_sensor_temperature'), 'utf-8'),
-                'pump_state': str(self.redisDbReference.get('pump_state'), 'utf-8')
+                'right_sensor_temperature': str(self.redisDbReference.get('right_sensor_temperature') or b'', 'utf-8'),
+                'middle_sensor_temperature': str(self.redisDbReference.get('middle_sensor_temperature') or b'', 'utf-8'),
+                'left_sensor_temperature': str(self.redisDbReference.get('left_sensor_temperature') or b'', 'utf-8'),
+                'tank_sensor_temperature': str(self.redisDbReference.get('tank_sensor_temperature') or b'', 'utf-8'),
+                'pump_state': str(self.redisDbReference.get('pump_state') or b'', 'utf-8'),
+                'cpu_usage': str(self.redisDbReference.get('cpu_usage') or b'', 'utf-8')
             }
         )
 

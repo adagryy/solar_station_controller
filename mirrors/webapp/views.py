@@ -20,20 +20,21 @@ def mirrormanagement(request):
     if request.method == 'POST':
         managementData = ManagementForm(request.POST)
         if managementData.is_valid():
-            redisDbReference.set('automatic', str(managementData.cleaned_data['automatic']))
-            redisDbReference.set('other', str(managementData.cleaned_data['other']))
+            redisDbReference.set('automaticControl', str(managementData.cleaned_data['automaticControl']))
+            redisDbReference.set('manualControl', str(managementData.cleaned_data['manualControl']))
             redisDbReference.set('pumpLaunchingTemperature', managementData.cleaned_data['pumpLaunchingTemperature'])        
-            redisDbReference.set('pumpTime', managementData.cleaned_data['pumpTime'])
-            redisDbReference.set('interval', managementData.cleaned_data['interval'])
-            return render(request, 'management/management.html', {'form': managementData, 'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+            redisDbReference.set('pumpWorkingTime', managementData.cleaned_data['pumpWorkingTime'])
+            redisDbReference.set('temperatureReadInterval', managementData.cleaned_data['temperatureReadInterval'])
+            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
         else:
-            return render(request, 'management/management.html', {'form': managementData, 'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
     elif request.method == 'GET':
-        return render(request, 'management/management.html', {'automatic': str_to_bool(redisDbReference.get('automatic')), 'other': str_to_bool(redisDbReference.get('other')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature')), 'pumpTime': int(redisDbReference.get('pumpTime')), 'interval': int(redisDbReference.get('interval'))})
+        return render(request, 'management/management.html', {'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
     # What now?
     # return render(request, 'management/management.html', {})
 
 def str_to_bool(s):
+    s = s or b'False'
     s = s.decode('utf-8')
     if s == 'True':
          return True

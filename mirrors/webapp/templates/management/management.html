@@ -7,12 +7,12 @@
   {% csrf_token %}
   <div class="form-group">
     <label class="form-check-label">
-      <input id="automatic" name="automatic" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if automatic %}checked="checked"{% endif %}>  Sterowanie automatyczne
+      <input id="automaticControl" name="automaticControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if automaticControl %}checked="checked"{% endif %}>  Sterowanie automatyczne
     </label>
   </div>
   <div class="form-group">
     <label class="form-check-label">
-      <input id="other" name="other" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if other %}checked="checked"{% endif %}>  Włącznik pompki
+      <input id="manualControl" name="manualControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if manualControl %}checked="checked"{% endif %}>  Włącznik pompki
     </label>
   </div>
   <div class="form-group">
@@ -25,19 +25,19 @@
     {% endif %}
   </div>
   <div class="form-group">
-    <label for="pumpTime">Czas jednostkowego działania pompki (0-300 sekund)</label>
-    <input id="pumpTime" name="pumpTime" type="number" class="form-control" aria-describedby="emailHelp" placeholder="Czas (w sekundach)" value="{{pumpTime}}">
-    {% if form.pumpTime.errors %}
-      {% for error in form.pumpTime.errors %}
+    <label for="pumpWorkingTime">Czas jednostkowego działania pompki (10-300 sekund)</label>
+    <input id="pumpWorkingTime" name="pumpWorkingTime" type="number" class="form-control" aria-describedby="emailHelp" placeholder="Czas (w sekundach)" value="{{pumpWorkingTime}}">
+    {% if form.pumpWorkingTime.errors %}
+      {% for error in form.pumpWorkingTime.errors %}
           <small class="text-danger">{{ error }}</small>
       {% endfor %}
     {% endif %}
   </div>
   <div class="form-group">
-    <label for="interval">Interwał czasowy odczytu temperatury (0-5 sekund)</label>
-    <input id="interval" name="interval" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{interval}}">
-    {% if form.interval.errors %}
-      {% for error in form.interval.errors %}
+    <label for="temperatureReadInterval">Interwał czasowy odczytu temperatury (0-5 sekund)</label>
+    <input id="temperatureReadInterval" name="temperatureReadInterval" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{temperatureReadInterval}}">
+    {% if form.temperatureReadInterval.errors %}
+      {% for error in form.temperatureReadInterval.errors %}
           <small class="text-danger">{{ error }}</small>
       {% endfor %}
     {% endif %}
@@ -48,46 +48,46 @@
 <hr style="margin-bottom:5px !important; margin-top:5px !important; " />
 <script>
   $(document).ready(function(){
-    $("#automatic").bootstrapToggle()
-    rearrangeReadonlyFields(document.getElementById("automatic").checked)
-    $("#automatic").change(function(){
-      rearrangeReadonlyFields(document.getElementById("automatic").checked);
+    $("#automaticControl").bootstrapToggle()
+    rearrangeReadonlyFields(document.getElementById("automaticControl").checked)
+    $("#automaticControl").change(function(){
+      rearrangeReadonlyFields(document.getElementById("automaticControl").checked);
     })
   });
 
   // Function below needs to be redesigned - it looks horrible!
   function rearrangeReadonlyFields(isAuto) {
     if (!!isAuto) {        
-      $("#interval").removeAttr("readonly");
-      $("#interval").removeAttr("onFocus");
-      document.getElementById("interval").style.cursor = "text";
-      $("#pumpTime").removeAttr("readonly"); 
-      $("#pumpTime").removeAttr("onFocus"); 
-      document.getElementById("pumpTime").style.cursor = "text";
+      $("#temperatureReadInterval").removeAttr("readonly");
+      $("#temperatureReadInterval").removeAttr("onFocus");
+      document.getElementById("temperatureReadInterval").style.cursor = "text";
+      $("#pumpWorkingTime").removeAttr("readonly"); 
+      $("#pumpWorkingTime").removeAttr("onFocus"); 
+      document.getElementById("pumpWorkingTime").style.cursor = "text";
       $("#pumpLaunchingTemperature").removeAttr("readonly"); 
       $("#pumpLaunchingTemperature").removeAttr("onFocus"); 
       document.getElementById("pumpLaunchingTemperature").style.cursor = "text";
-      $("#other").attr("data-onstyle", "light");
-      $("#other").attr("data-offstyle", "light");
-      $('#other').bootstrapToggle('off')
-      $('#other').bootstrapToggle('disable')        
-      $("#other").bootstrapToggle('destroy')
-      $("#other").bootstrapToggle()
+      $("#manualControl").attr("data-onstyle", "light");
+      $("#manualControl").attr("data-offstyle", "light");
+      $('#manualControl').bootstrapToggle('off')
+      $('#manualControl').bootstrapToggle('disable')        
+      $("#manualControl").bootstrapToggle('destroy')
+      $("#manualControl").bootstrapToggle()
     } else if (!isAuto) {
-      $('#other').bootstrapToggle('enable')
-      $("#interval").attr("readonly", "");
-      $("#interval").attr("onFocus", "this.blur()")
-      document.getElementById("interval").style.cursor = "not-allowed";
-      $("#pumpTime").attr("readonly", ""); 
-      $("#pumpTime").attr("onFocus", "this.blur()")
-      document.getElementById("pumpTime").style.cursor = "not-allowed";
+      $('#manualControl').bootstrapToggle('enable')
+      $("#temperatureReadInterval").attr("readonly", "");
+      $("#temperatureReadInterval").attr("onFocus", "this.blur()")
+      document.getElementById("temperatureReadInterval").style.cursor = "not-allowed";
+      $("#pumpWorkingTime").attr("readonly", ""); 
+      $("#pumpWorkingTime").attr("onFocus", "this.blur()")
+      document.getElementById("pumpWorkingTime").style.cursor = "not-allowed";
       $("#pumpLaunchingTemperature").attr("readonly", ""); 
       $("#pumpLaunchingTemperature").attr("onFocus", "this.blur()")
       document.getElementById("pumpLaunchingTemperature").style.cursor = "not-allowed";   
-      $("#other").attr("data-onstyle", "danger");
-      $("#other").attr("data-offstyle", "success");
-      $("#other").bootstrapToggle('destroy')
-      $("#other").bootstrapToggle()
+      $("#manualControl").attr("data-onstyle", "danger");
+      $("#manualControl").attr("data-offstyle", "success");
+      $("#manualControl").bootstrapToggle('destroy')
+      $("#manualControl").bootstrapToggle()
     }
   }
 </script>

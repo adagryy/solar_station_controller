@@ -4,11 +4,18 @@ import redis
 import time
 import random
 import threading
+from w1thermsensor import W1ThermSensor
+from gpiozero import CPUTemperature
 
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
 global pumpEnabled
 pumpEnabled = False
+
+left_sensor_temperature = float(r.get('left_sensor_temperature'))
+middle_sensor_temperature = float(r.get('middle_sensor_temperature'))
+right_sensor_temperature = float(r.get('right_sensor_temperature'))
+tank_sensor_temperature = float(r.get('tank_sensor_temperature'))
 
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():    
@@ -44,8 +51,8 @@ def enable_pump():
         if (pumpEnabled or str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpEnabled > 10) and (currentRun - lastTimePumpDisabled > 10): # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
             lastTimePumpEnabled = int(time.time())
             r.set('pump_state', 1) # Save to database, that pump is enabled
-            print("Pump state: ON")            	
-        	# if gpio.LOW            
+            print("Pump state: ON")             
+            # if gpio.LOW            
             #     enable gpio
             #     sleep(delay)        
         if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10): # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
@@ -54,6 +61,28 @@ def enable_pump():
             print("Pump state: OFF") 
             # if gpio.HIGH 
             #     disable gpio
+
+# Reads temperatures from sensors in its own thread
+def read_temperature_from_sensors():
+    while True:
+        time.sleep(0.1)
+
+        # Read temperature from the left sensor
+        try:
+            global left_sensor_temperature 
+            left_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature()    
+            print("reading " + str(left_sensor_temperature))        
+        except:
+            print("Error reading temperature from left sensor!")
+
+        # Read temperatures from the middle sensor
+        try:
+            global middle_sensor_temperature
+            middle_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
+        except:
+            print("Error reading temperature from middle sensor!")
+        # right_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature()
+        # tank_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
 
 # Decides if pump should be enabled
 def should_pump_be_enabled(left, middle, right, launching):
@@ -70,18 +99,18 @@ def str_to_bool(s):
         raise ValueError 
 # Start executing script
 initialSetup()
+
+# Launch new thread for pump control
 thread = threading.Thread(target=enable_pump, args=())
 thread.start()
 
+# Launch new thread for reading temperatures
+temperatureThread = threading.Thread(target=read_temperature_from_sensors, args=())
+temperatureThread.start()
+
 while True:
     # Reading delay
-    time.sleep(int(r.get('temperatureReadInterval')))    
-    
-    # Get temperatures from sensors (in production there should be real sensors connected)
-    left_sensor_temperature = round(random.uniform(20, 80))
-    middle_sensor_temperature = round(random.uniform(20, 80))
-    right_sensor_temperature = round(random.uniform(20, 80))
-    tank_sensor_temperature = round(random.uniform(20, 80))   
+    time.sleep(int(r.get('temperatureReadInterval')))
 
     # Get the pump launching temperature; if absorber exceeds this temperature, pump then is launched
     pump_launching_temperature = int(r.get('pumpLaunchingTemperature'))
@@ -90,12 +119,16 @@ while True:
     
     # Set flag indicating enabling/disabling the pump
     pumpEnabled = should_pump_be_enabled(left_sensor_temperature, middle_sensor_temperature, right_sensor_temperature, pump_launching_temperature)     
-
+    print("Main " + str(left_sensor_temperature))
     r.set('left_sensor_temperature', left_sensor_temperature)
     r.set('middle_sensor_temperature', middle_sensor_temperature)
     r.set('right_sensor_temperature', right_sensor_temperature)    
     r.set('tank_sensor_temperature', tank_sensor_temperature)
 
-    # Additional diagnostics data
+    #### Additional diagnostics data ####
+    # Get CPU utilization
     r.set('cpu_usage', psutil.cpu_percent())
-    # r.set('cpu_temperature', psutil.cpu_percent())
+
+    # Get CPU temperature
+    cpu = CPUTemperature()
+    r.set('cpu_temperature', cpu.temperature)

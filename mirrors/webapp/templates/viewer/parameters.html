@@ -77,10 +77,10 @@
    
       chatSocket.onmessage = function(e) {
           var data = JSON.parse(e.data);
-          document.getElementById('left_sensor_temperature').innerHTML = !!data['left_sensor_temperature'] ? Math.round(data['left_sensor_temperature'] * 10)/10 : '-';
-          document.getElementById('middle_sensor_temperature').innerHTML = !!data['middle_sensor_temperature'] ?  Math.round(data['middle_sensor_temperature'] * 10)/10 : '-';
-          document.getElementById('right_sensor_temperature').innerHTML = !!data['right_sensor_temperature'] ? Math.round(data['right_sensor_temperature'] * 10)/10 : '-';
-          document.getElementById('tank_sensor_temperature').innerHTML = !!data['tank_sensor_temperature'] ? Math.round(data['tank_sensor_temperature'] * 10)/10 : '-';
+          document.getElementById('left_sensor_temperature').innerHTML = !!data['left_sensor_temperature'] ? Math.round(data['left_sensor_temperature'] * 100)/100 : '-';
+          document.getElementById('middle_sensor_temperature').innerHTML = !!data['middle_sensor_temperature'] ?  Math.round(data['middle_sensor_temperature'] * 100)/100 : '-';
+          document.getElementById('right_sensor_temperature').innerHTML = !!data['right_sensor_temperature'] ? Math.round(data['right_sensor_temperature'] * 100)/100 : '-';
+          document.getElementById('tank_sensor_temperature').innerHTML = !!data['tank_sensor_temperature'] ? Math.round(data['tank_sensor_temperature'] * 100)/100 : '-';
           let pumpState = Math.round(data['pump_state']);
           document.getElementById('pumpState').innerHTML = pumpState === 1 ? "Uruchomiona" : "Wyłączona";
           if (pumpState === 1) {
@@ -90,7 +90,7 @@
           }
 
           document.getElementById('cpu_usage').innerHTML = !!data['cpu_usage'] ? ((data['cpu_usage']) + '%') : '-';
-          document.getElementById('cpu_temperature').innerHTML = !!data['cpu_temperature'] ? (data['cpu_temperature'] + '&#8451;') : '-';
+          document.getElementById('cpu_temperature').innerHTML = !!data['cpu_temperature'] ? (Math.round(data['cpu_temperature']*100)/100 + '&#8451;') : '-';
       };
 
       chatSocket.onclose = function(e) {

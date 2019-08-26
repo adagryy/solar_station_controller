@@ -77,10 +77,10 @@
    
       chatSocket.onmessage = function(e) {
           var data = JSON.parse(e.data);
-          document.getElementById('left_sensor_temperature').innerHTML = !!data['left_sensor_temperature'] ? Math.round(data['left_sensor_temperature']) : '-';
-          document.getElementById('middle_sensor_temperature').innerHTML = !!data['middle_sensor_temperature'] ?  Math.round(data['middle_sensor_temperature']) : '-';
-          document.getElementById('right_sensor_temperature').innerHTML = !!data['right_sensor_temperature'] ? Math.round(data['right_sensor_temperature']) : '-';
-          document.getElementById('tank_sensor_temperature').innerHTML = !!data['tank_sensor_temperature'] ? Math.round(data['tank_sensor_temperature']) : '-';
+          document.getElementById('left_sensor_temperature').innerHTML = !!data['left_sensor_temperature'] ? Math.round(data['left_sensor_temperature'] * 10)/10 : '-';
+          document.getElementById('middle_sensor_temperature').innerHTML = !!data['middle_sensor_temperature'] ?  Math.round(data['middle_sensor_temperature'] * 10)/10 : '-';
+          document.getElementById('right_sensor_temperature').innerHTML = !!data['right_sensor_temperature'] ? Math.round(data['right_sensor_temperature'] * 10)/10 : '-';
+          document.getElementById('tank_sensor_temperature').innerHTML = !!data['tank_sensor_temperature'] ? Math.round(data['tank_sensor_temperature'] * 10)/10 : '-';
           let pumpState = Math.round(data['pump_state']);
           document.getElementById('pumpState').innerHTML = pumpState === 1 ? "Uruchomiona" : "Wyłączona";
           if (pumpState === 1) {

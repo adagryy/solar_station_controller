@@ -119,7 +119,7 @@ while True:
     
     # Set flag indicating enabling/disabling the pump
     pumpEnabled = should_pump_be_enabled(left_sensor_temperature, middle_sensor_temperature, right_sensor_temperature, pump_launching_temperature)     
-    print("Main " + str(left_sensor_temperature))
+
     r.set('left_sensor_temperature', left_sensor_temperature)
     r.set('middle_sensor_temperature', middle_sensor_temperature)
     r.set('right_sensor_temperature', right_sensor_temperature)    

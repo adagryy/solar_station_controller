@@ -44,7 +44,8 @@ class ParametersConsumer(WebsocketConsumer):
                 'left_sensor_temperature': str(self.redisDbReference.get('left_sensor_temperature') or b'', 'utf-8'),
                 'tank_sensor_temperature': str(self.redisDbReference.get('tank_sensor_temperature') or b'', 'utf-8'),
                 'pump_state': str(self.redisDbReference.get('pump_state') or b'', 'utf-8'),
-                'cpu_usage': str(self.redisDbReference.get('cpu_usage') or b'', 'utf-8')
+                'cpu_usage': str(self.redisDbReference.get('cpu_usage') or b'', 'utf-8'),
+                'cpu_temperature': str(self.redisDbReference.get('cpu_temperature') or b'', 'utf-8')
             }
         )
 

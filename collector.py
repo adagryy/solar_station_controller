@@ -81,7 +81,15 @@ def read_temperature_from_sensors():
             middle_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
         except:
             print("Error reading temperature from middle sensor!")
-        # right_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature()
+
+        # Read temperatures from the right sensor
+        try:
+            global right_sensor_temperature
+            right_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature()
+        except:
+            print("Error reading temperature from right sensor!")
+
+        # Read temperatures from water heat tank
         # tank_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
 
 # Decides if pump should be enabled

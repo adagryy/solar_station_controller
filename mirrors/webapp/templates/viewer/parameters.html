@@ -76,21 +76,36 @@
       var chatSocket = new WebSocket(protocol + '://' + window.location.host + '/parametersPreview/');
    
       chatSocket.onmessage = function(e) {
-          var data = JSON.parse(e.data);
-          document.getElementById('left_sensor_temperature').innerHTML = !!data['left_sensor_temperature'] ? Math.round(data['left_sensor_temperature'] * 100)/100 : '-';
-          document.getElementById('middle_sensor_temperature').innerHTML = !!data['middle_sensor_temperature'] ?  Math.round(data['middle_sensor_temperature'] * 100)/100 : '-';
-          document.getElementById('right_sensor_temperature').innerHTML = !!data['right_sensor_temperature'] ? Math.round(data['right_sensor_temperature'] * 100)/100 : '-';
-          document.getElementById('tank_sensor_temperature').innerHTML = !!data['tank_sensor_temperature'] ? Math.round(data['tank_sensor_temperature'] * 100)/100 : '-';
-          let pumpState = Math.round(data['pump_state']);
-          document.getElementById('pumpState').innerHTML = pumpState === 1 ? "Uruchomiona" : "Wyłączona";
-          if (pumpState === 1) {
-          	$("#pumpStatusArea").attr("class", "p-3 mb-2 bg-danger text-white");
-          } else {
-          	$("#pumpStatusArea").attr("class", "p-3 mb-2 bg-success text-white");
+          let data = JSON.parse(e.data);
+          let typeOfResponse = (response, unit = '', roundBase = 2) => {
+            if(!isNaN(response)) {
+              return Number(response).toFixed(roundBase) + unit;
+            }
+            if(typeof response === "string") {
+              return response;
+            }
+            if(typeof response === "undefined") {
+              return "Brak danych!".italics();
+            }else{
+              return "Nieznany błąd!";
+            }
           }
-
-          document.getElementById('cpu_usage').innerHTML = !!data['cpu_usage'] ? ((data['cpu_usage']) + '%') : '-';
-          document.getElementById('cpu_temperature').innerHTML = !!data['cpu_temperature'] ? (Math.round(data['cpu_temperature']*100)/100 + '&#8451;') : '-';
+          document.getElementById('left_sensor_temperature').innerHTML = typeOfResponse(data['left_sensor_temperature']);
+          document.getElementById('middle_sensor_temperature').innerHTML = typeOfResponse(data['middle_sensor_temperatudre']);
+          document.getElementById('right_sensor_temperature').innerHTML = typeOfResponse(data['right_sensor_temperature']);
+          document.getElementById('tank_sensor_temperature').innerHTML = typeOfResponse(data['tank_sensor_temperature']);
+          document.getElementById('cpu_usage').innerHTML = typeOfResponse(data['cpu_usage'], "%", 1);
+          document.getElementById('cpu_temperature').innerHTML = typeOfResponse(data['cpu_temperature'], '&#8451;', 2);
+          
+          let pumpState = Math.round(data['pump_state']);
+          if(pumpState === 1){
+            $("#pumpStatusArea").attr("class", "p-3 mb-2 bg-danger text-white");
+            document.getElementById('pumpState').innerHTML = "Uruchomiona";
+          }
+          else if (pumpState === 0){
+            $("#pumpStatusArea").attr("class", "p-3 mb-2 bg-success text-white");
+            document.getElementById('pumpState').innerHTML = "Wyłączona";
+          }          
       };
 
       chatSocket.onclose = function(e) {

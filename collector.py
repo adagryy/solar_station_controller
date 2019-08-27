@@ -12,11 +12,6 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 global pumpEnabled
 pumpEnabled = False
 
-left_sensor_temperature = float(r.get('left_sensor_temperature'))
-middle_sensor_temperature = float(r.get('middle_sensor_temperature'))
-right_sensor_temperature = float(r.get('right_sensor_temperature'))
-tank_sensor_temperature = float(r.get('tank_sensor_temperature'))
-
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():    
     automaticControl = r.get('automaticControl')
@@ -69,32 +64,28 @@ def read_temperature_from_sensors():
 
         # Read temperature from the left sensor
         try:
-            global left_sensor_temperature 
-            left_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature()    
-            print("reading " + str(left_sensor_temperature))        
+            r.set('left_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature())   
         except:
-            print("Error reading temperature from left sensor!")
+            r.set('left_sensor_temperature', "Czujnik prawy nie odpowiada!")
 
         # Read temperatures from the middle sensor
         try:
-            global middle_sensor_temperature
-            middle_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
+            r.set('middle_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature())
         except:
-            print("Error reading temperature from middle sensor!")
+            r.set('middle_sensor_temperature', "Czujnik środkowy nie odpowiada!")
 
         # Read temperatures from the right sensor
-        try:
-            global right_sensor_temperature
-            right_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature()
+        try:             
+            r.set('right_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature())
         except:
-            print("Error reading temperature from right sensor!")
+            r.set('right_sensor_temperature', "Czujnik prawy nie odpowiada!")
 
         # Read temperatures from water heat tank
         # tank_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
 
 # Decides if pump should be enabled
 def should_pump_be_enabled(left, middle, right, launching):
-    return (left > launching or middle > launching or right > launching) and str_to_bool(r.get('automaticControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
+    return (left >= launching or middle >= launching or right >= launching) and str_to_bool(r.get('automaticControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
 
 # This helper is used to convert booleans from database read as a string to Pythons' bool type
 def str_to_bool(s):
@@ -105,6 +96,12 @@ def str_to_bool(s):
         return False
     else:
         raise ValueError 
+
+def isNumber(item):
+    try:
+        return float(item)
+    except ValueError:
+        return -1000
 # Start executing script
 initialSetup()
 
@@ -125,13 +122,8 @@ while True:
 
     # print("temperatureReadInterval: " + strl(int(r.get('temperatureReadInterval'))) + ", launch: " + str(pump_launching_temperature) + ", left: " + str(left_sensor_temperature) + ", middle: " + str(middle_sensor_temperature) + ", right: " + str(right_sensor_temperature) + ", tank: " + str(tank_sensor_temperature))
     
-    # Set flag indicating enabling/disabling the pump
-    pumpEnabled = should_pump_be_enabled(left_sensor_temperature, middle_sensor_temperature, right_sensor_temperature, pump_launching_temperature)     
-
-    r.set('left_sensor_temperature', left_sensor_temperature)
-    r.set('middle_sensor_temperature', middle_sensor_temperature)
-    r.set('right_sensor_temperature', right_sensor_temperature)    
-    r.set('tank_sensor_temperature', tank_sensor_temperature)
+    # Set flag indicating enabling/disabling the pump    
+    pumpEnabled = should_pump_be_enabled(isNumber(r.get('left_sensor_temperature')), isNumber(r.get('middle_sensor_temperature')), isNumber(r.get('right_sensor_temperature')), pump_launching_temperature)     
 
     #### Additional diagnostics data ####
     # Get CPU utilization

@@ -6,11 +6,17 @@ import random
 import threading
 from w1thermsensor import W1ThermSensor
 from gpiozero import CPUTemperature
+import os.path  
+import glob
+import RPi.GPIO as GPIO
 
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
 global pumpEnabled
 pumpEnabled = False
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(13, GPIO.OUT)
 
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():    
@@ -86,6 +92,17 @@ def read_temperature_from_sensors():
         # Read temperatures from water heat tank
         # tank_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
 
+# Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
+def control_temperature_sensors():
+    while True:
+        sleep(5)
+        foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
+        if foldersCount != 4:
+            GPIO.output(13, GPIO.HIGH)
+            sleep(5)
+            GPIO.output(13, GPIO.LOW)
+
+
 # Decides if pump should be enabled
 def should_pump_be_enabled(left, middle, right, launching):
     return (left >= launching or middle >= launching or right >= launching) and str_to_bool(r.get('automaticControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
@@ -115,6 +132,10 @@ thread.start()
 # Launch new thread for reading temperatures
 temperatureThread = threading.Thread(target=read_temperature_from_sensors, args=())
 temperatureThread.start()
+
+# Launch new thread for controlling when temperature sensors crash
+controlThread = threading.Thread(target=read_temperature_from_sensors, args=())
+controlThread.start()
 
 while True:
     # Reading delay

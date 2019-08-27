@@ -35,6 +35,7 @@ def initialSetup():
 def enable_pump():
     currentRun = lastTimePumpEnabled = 0 #  lastTimePumpEnabled - remember, when pump was last time enabled - it can change state at least 10s from previous state change. 
     lastTimePumpDisabled = int(time.time())
+    previousState = False # Initial state of the pump (False = pump disabled, True = pump enabled)
     while True:
         # Read, how much time pump should be enabled at once
         delay = int(r.get('pumpWorkingTime'))
@@ -43,15 +44,17 @@ def enable_pump():
         currentRun = int(time.time()) # we measure time to compare when pump was last time enabled/disabled to avoid enabling/disabling pump too fast (i.e 3 time per second)
 
         # Flag saying pump should be enabled
-        if (pumpEnabled or str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpEnabled > 10) and (currentRun - lastTimePumpDisabled > 10): # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
+        if (pumpEnabled or str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpEnabled > 10) and (currentRun - lastTimePumpDisabled > 10) and not previousState: # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
             lastTimePumpEnabled = int(time.time())
+            previousState = True
             r.set('pump_state', 1) # Save to database, that pump is enabled
             print("Pump state: ON")             
             # if gpio.LOW            
             #     enable gpio
             #     sleep(delay)        
-        if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10): # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
+        if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
+            previousState = False
             r.set('pump_state', 0) # Save to database, that pump is disabled
             print("Pump state: OFF") 
             # if gpio.HIGH 

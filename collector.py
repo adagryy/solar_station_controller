@@ -2,13 +2,12 @@
 import psutil
 import redis
 import time
-import random
 import threading
 from w1thermsensor import W1ThermSensor
-from gpiozero import CPUTemperature
 import os.path  
 import glob
 import RPi.GPIO as GPIO
+import sys, os
 
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
@@ -42,7 +41,9 @@ def enable_pump():
     currentRun = lastTimePumpEnabled = 0 #  lastTimePumpEnabled - remember, when pump was last time enabled - it can change state at least 10s from previous state change. 
     lastTimePumpDisabled = int(time.time())
     previousState = False # Initial state of the pump (False = pump disabled, True = pump enabled)
-    while True:
+
+    t = threading.currentThread()
+    while getattr(t, "should_still_be_running", True):
         # Read, how much time pump should be enabled at once
         delay = int(r.get('pumpWorkingTime'))
         time.sleep(0.5)
@@ -68,7 +69,8 @@ def enable_pump():
 
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors():
-    while True:
+    t = threading.currentThread()
+    while getattr(t, "should_still_be_running", True):
         time.sleep(0.1)
 
         # Read temperature from the left sensor
@@ -94,13 +96,16 @@ def read_temperature_from_sensors():
 
 # Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
 def control_temperature_sensors():
-    while True:
-        sleep(5)
+    t = threading.currentThread()
+    while getattr(t, "should_still_be_running", True):
+        time.sleep(5)
         foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
         if foldersCount != 4:
             GPIO.output(13, GPIO.HIGH)
-            sleep(5)
+            # print("Starting reset sensors: " + str(GPIO.input(13)))
+            time.sleep(5)
             GPIO.output(13, GPIO.LOW)
+            # print("Ending reset sensors: " + str(GPIO.input(13)))
 
 
 # Decides if pump should be enabled
@@ -122,37 +127,67 @@ def isNumber(item):
         return float(item)
     except ValueError:
         return -1000
+
+# Return CPU temperature as a character string                                      
+def getCPUtemperature():
+    res = os.popen('vcgencmd measure_temp').readline()
+    return(res.replace("temp=","").replace("'C\n",""))
+
+# ---------------------------------------------------------------
+# ---------------------------------------------------------------
+# ---------------------------------------------------------------
+
 # Start executing script
 initialSetup()
 
 # Launch new thread for pump control
 thread = threading.Thread(target=enable_pump, args=())
+thread.should_still_be_running = True
 thread.start()
 
 # Launch new thread for reading temperatures
 temperatureThread = threading.Thread(target=read_temperature_from_sensors, args=())
+temperatureThread.should_still_be_running = True
 temperatureThread.start()
 
 # Launch new thread for controlling when temperature sensors crash
-controlThread = threading.Thread(target=read_temperature_from_sensors, args=())
+controlThread = threading.Thread(target=control_temperature_sensors, args=())
+controlThread.should_still_be_running = True
 controlThread.start()
 
-while True:
-    # Reading delay
-    time.sleep(int(r.get('temperatureReadInterval')))
+try:
+    while True:
+        # Reading delay
+        time.sleep(int(r.get('temperatureReadInterval')))
 
-    # Get the pump launching temperature; if absorber exceeds this temperature, pump then is launched
-    pump_launching_temperature = int(r.get('pumpLaunchingTemperature'))
+        # Get the pump launching temperature; if absorber exceeds this temperature, pump then is launched
+        pump_launching_temperature = int(r.get('pumpLaunchingTemperature'))
 
-    # print("temperatureReadInterval: " + strl(int(r.get('temperatureReadInterval'))) + ", launch: " + str(pump_launching_temperature) + ", left: " + str(left_sensor_temperature) + ", middle: " + str(middle_sensor_temperature) + ", right: " + str(right_sensor_temperature) + ", tank: " + str(tank_sensor_temperature))
+        # print("temperatureReadInterval: " + strl(int(r.get('temperatureReadInterval'))) + ", launch: " + str(pump_launching_temperature) + ", left: " + str(left_sensor_temperature) + ", middle: " + str(middle_sensor_temperature) + ", right: " + str(right_sensor_temperature) + ", tank: " + str(tank_sensor_temperature))
     
-    # Set flag indicating enabling/disabling the pump    
-    pumpEnabled = should_pump_be_enabled(isNumber(r.get('left_sensor_temperature')), isNumber(r.get('middle_sensor_temperature')), isNumber(r.get('right_sensor_temperature')), pump_launching_temperature)     
+        # Set flag indicating enabling/disabling the pump    
+        pumpEnabled = should_pump_be_enabled(isNumber(r.get('left_sensor_temperature')), isNumber(r.get('middle_sensor_temperature')), isNumber(r.get('right_sensor_temperature')), pump_launching_temperature)     
 
-    #### Additional diagnostics data ####
-    # Get CPU utilization
-    r.set('cpu_usage', psutil.cpu_percent())
+        #### Additional diagnostics data ####
+        # Get CPU utilization
+        r.set('cpu_usage', psutil.cpu_percent())
 
-    # Get CPU temperature
-    cpu = CPUTemperature()
-    r.set('cpu_temperature', cpu.temperature)
+        # Get CPU temperature
+        r.set('cpu_temperature', getCPUtemperature())
+except KeyboardInterrupt:
+    thread.should_still_be_running = False
+    temperatureThread.should_still_be_running = False
+    controlThread.should_still_be_running = False
+    thread.join()
+    temperatureThread.join()
+    controlThread.join()
+    print("Pump thread state (False = disabled, True: enabled):  " + str(thread.isAlive()))
+    print("Temperature sensors thread state (False = disabled, True: enabled):  " + str(temperatureThread.isAlive()))
+    print("Sensors control thread state (False = disabled, True: enabled):  " + str(controlThread.isAlive()))
+    print()
+except Exception:
+    print("Unknown error!")
+finally:
+    GPIO.cleanup()
+print("Script ended successfully!")
+sys.exit(0)

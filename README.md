@@ -29,9 +29,14 @@ Enter virtual environment:
  
 Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis), w1thermsensor (package for reading temperature from sensors), gpiozero (for reading cpu temperature)
 	
-	$ pip3 install Django Daphne Redis psycopg2 channels channels_redis w1thermsensor gpiozero
+	$ pip3 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor gpiozero RPi.GPIO
 
 Copy source code of application from this repository to <your_app_path>
+
+Now run necessary software for GPIO:
+
+	$ systemctl enable pigpiod.service
+	$ systemctl start pigpiod.service
 
 Finally you can run development server:
 

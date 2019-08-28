@@ -27,9 +27,9 @@ Enter virtual environment:
 	
 	$ source env/bin/activate
  
-Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis), w1thermsensor (package for reading temperature from sensors), gpiozero (for reading cpu temperature)
+Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis), w1thermsensor (package for reading temperature from sensors)
 	
-	$ pip3 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor gpiozero RPi.GPIO
+	$ pip3 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor RPi.GPIO
 
 Copy source code of application from this repository to <your_app_path>
 

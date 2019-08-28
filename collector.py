@@ -14,8 +14,8 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 global pumpEnabled
 pumpEnabled = False
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(11, GPIO.OUT)
-GPIO.setup(13, GPIO.OUT)
+GPIO.setup(12, GPIO.OUT)
+# GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
 
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():    
@@ -100,11 +100,11 @@ def control_temperature_sensors():
     while getattr(t, "should_still_be_running", True):
         time.sleep(5)
         foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
-        if foldersCount != 4:
-            GPIO.output(13, GPIO.HIGH)
+        if foldersCount != 3:
+            GPIO.output(12, GPIO.HIGH)
             # print("Starting reset sensors: " + str(GPIO.input(13)))
             time.sleep(5)
-            GPIO.output(13, GPIO.LOW)
+            GPIO.output(12, GPIO.LOW)
             # print("Ending reset sensors: " + str(GPIO.input(13)))
 
 

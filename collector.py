@@ -42,6 +42,7 @@ def enable_pump():
     currentRun = lastTimePumpEnabled = 0 #  lastTimePumpEnabled - remember, when pump was last time enabled - it can change state at least 10s from previous state change. 
     lastTimePumpDisabled = int(time.time())
     previousState = False # Initial state of the pump (False = pump disabled, True = pump enabled)
+    r.set('pump_state', 0) # This prevents from errors if script was terminated during pump is working 
 
     t = threading.currentThread()
     while getattr(t, "should_still_be_running", True):
@@ -93,7 +94,10 @@ def read_temperature_from_sensors():
             r.set('right_sensor_temperature', "Czujnik prawy nie odpowiada!")
 
         # Read temperatures from water heat tank
-        # tank_sensor_temperature = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature()
+        try:             
+            r.set('tank_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "03019779sdfa").get_temperature())
+        except:
+            r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
 
 # Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
 def control_temperature_sensors():

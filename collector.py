@@ -7,12 +7,13 @@ from w1thermsensor import W1ThermSensor
 import os.path  
 import glob
 import RPi.GPIO as GPIO
-import sys, os
+import sys, os, signal
 
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
 global pumpEnabled
 pumpEnabled = False
+numberOfSensors = 2
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(12, GPIO.OUT)
 # GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
@@ -96,16 +97,15 @@ def read_temperature_from_sensors():
 
 # Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
 def control_temperature_sensors():
+    time.sleep(60) # suspend at the beginning of the script controlling sensors
     t = threading.currentThread()
     while getattr(t, "should_still_be_running", True):
         time.sleep(5)
         foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
-        if foldersCount != 3:
-            GPIO.output(12, GPIO.HIGH)
-            # print("Starting reset sensors: " + str(GPIO.input(13)))
-            time.sleep(5)
-            GPIO.output(12, GPIO.LOW)
-            # print("Ending reset sensors: " + str(GPIO.input(13)))
+        if foldersCount <= numberOfSensors:
+            GPIO.output(12, GPIO.HIGH) # disable power for sensors
+            time.sleep(15) # cut off the power from sensors for 15 seconds to let them reset
+            GPIO.output(12, GPIO.LOW) # enable power for sensors again
 
 
 # Decides if pump should be enabled
@@ -133,6 +133,19 @@ def getCPUtemperature():
     res = os.popen('vcgencmd measure_temp').readline()
     return(res.replace("temp=","").replace("'C\n",""))
 
+# Handler for stopping/killing application gracefully
+def handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread):
+    thread.should_still_be_running = False
+    temperatureThread.should_still_be_running = False
+    controlThread.should_still_be_running = False
+    thread.join()
+    temperatureThread.join()
+    controlThread.join()
+    print("Pump thread state (False = disabled, True: enabled):  " + str(thread.isAlive()))
+    print("Temperature sensors thread state (False = disabled, True: enabled):  " + str(temperatureThread.isAlive()))
+    print("Sensors control thread state (False = disabled, True: enabled):  " + str(controlThread.isAlive()))
+    print()   
+
 # ---------------------------------------------------------------
 # ---------------------------------------------------------------
 # ---------------------------------------------------------------
@@ -155,6 +168,10 @@ controlThread = threading.Thread(target=control_temperature_sensors, args=())
 controlThread.should_still_be_running = True
 controlThread.start()
 
+signal.signal(signal.SIGTERM, handleStopSignalsOrKeyboardInterrupt)
+signal.signal(signal.SIGTSTP, handleStopSignalsOrKeyboardInterrupt)
+signal.signal(signal.SIGHUP, handleStopSignalsOrKeyboardInterrupt)
+
 try:
     while True:
         # Reading delay
@@ -175,17 +192,9 @@ try:
         # Get CPU temperature
         r.set('cpu_temperature', getCPUtemperature())
 except KeyboardInterrupt:
-    thread.should_still_be_running = False
-    temperatureThread.should_still_be_running = False
-    controlThread.should_still_be_running = False
-    thread.join()
-    temperatureThread.join()
-    controlThread.join()
-    print("Pump thread state (False = disabled, True: enabled):  " + str(thread.isAlive()))
-    print("Temperature sensors thread state (False = disabled, True: enabled):  " + str(temperatureThread.isAlive()))
-    print("Sensors control thread state (False = disabled, True: enabled):  " + str(controlThread.isAlive()))
-    print()
+    handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread)
 except Exception:
+    handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread)
     print("Unknown error!")
 finally:
     GPIO.cleanup()

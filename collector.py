@@ -15,7 +15,7 @@ global pumpEnabled
 pumpEnabled = False
 numberOfSensors = 2
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(12, GPIO.OUT)
+GPIO.setup(12, GPIO.OUT, initial=GPIO.HIGH)
 # GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
 
 # Setup initial data into Redis, if they are not defined there
@@ -100,6 +100,10 @@ def read_temperature_from_sensors():
             r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
 
 # Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
+# #Tragic
+# #Masakraaaaaaa 
+# :(
+# Fake sensors, drivers - no idea!
 def control_temperature_sensors():
     time.sleep(60) # suspend at the beginning of the script controlling sensors
     t = threading.currentThread()
@@ -107,9 +111,10 @@ def control_temperature_sensors():
         time.sleep(5)
         foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
         if foldersCount <= numberOfSensors:
-            GPIO.output(12, GPIO.HIGH) # disable power for sensors
+            time.sleep(60) # After detecting sensor crash we must wait for some amount of time, because resetting sensors immediately doesn't bring any positive result; in other words: crashing sensors is not short-timed process rather long (1-2 minutes) 	
+            GPIO.output(12, GPIO.LOW) # disable power for sensors
             time.sleep(15) # cut off the power from sensors for 15 seconds to let them reset
-            GPIO.output(12, GPIO.LOW) # enable power for sensors again
+            GPIO.output(12, GPIO.HIGH) # enable power for sensors again
 
 
 # Decides if pump should be enabled

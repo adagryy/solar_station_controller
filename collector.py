@@ -15,8 +15,8 @@ global pumpEnabled
 pumpEnabled = False
 numberOfSensors = 2
 GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT, initial=GPIO.HIGH)
 GPIO.setup(12, GPIO.OUT, initial=GPIO.HIGH)
-# GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
 
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():    
@@ -57,17 +57,17 @@ def enable_pump():
             lastTimePumpEnabled = int(time.time())
             previousState = True
             r.set('pump_state', 1) # Save to database, that pump is enabled
-            print("Pump state: ON")             
-            # if gpio.LOW            
-            #     enable gpio
-            #     sleep(delay)        
+            print("Pump state: ON")    
+            if GPIO.input(11): # Ensure that pump is already stopped
+                GPIO.output(11, GPIO.LOW) # Enable power for pump
+
         if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
             previousState = False
             r.set('pump_state', 0) # Save to database, that pump is disabled
             print("Pump state: OFF") 
-            # if gpio.HIGH 
-            #     disable gpio
+            if not GPIO.input(11): # Ensure that pump is already running
+                GPIO.output(11, GPIO.HIGH) # Disable power for pump
 
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors():
@@ -77,7 +77,7 @@ def read_temperature_from_sensors():
 
         # Read temperature from the left sensor
         try:
-            r.set('left_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature())   
+            r.set('left_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature())   
         except:
             r.set('left_sensor_temperature', "Czujnik prawy nie odpowiada!")
 
@@ -89,13 +89,13 @@ def read_temperature_from_sensors():
 
         # Read temperatures from the right sensor
         try:             
-            r.set('right_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature())
+            r.set('right_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature())
         except:
             r.set('right_sensor_temperature', "Czujnik prawy nie odpowiada!")
 
         # Read temperatures from water heat tank
         try:             
-            r.set('tank_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "03019779sdfa").get_temperature())
+            r.set('tank_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "03019779181c").get_temperature())
         except:
             r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
 

@@ -5,10 +5,21 @@ import logging
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 import redis
+from datetime import datetime, timedelta
+from .models import Temperature
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
+
+@login_required
+def chartData(request):
+    time_threshold = datetime.now() - timedelta(hours=24)
+    result = list(Temperature.objects.filter(dateOfReading__gt=time_threshold).values())
+    return HttpResponse(json.dumps(result, sort_keys=True, indent=1, cls=DjangoJSONEncoder))
 
 @login_required
 def parameters(request):

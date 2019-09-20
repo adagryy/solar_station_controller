@@ -1,3 +1,8 @@
 from django.db import models
 
-# Create your models here.
+class Temperature(models.Model):
+    leftSensorTemperature = models.FloatField()
+    middleSensorTemperature = models.FloatField()
+    rightSensorTemperature = models.FloatField()
+    tankSensorTemperature = models.FloatField()
+    dateOfReading = models.DateTimeField()

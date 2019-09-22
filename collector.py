@@ -7,7 +7,7 @@ import threading
 import os.path
 import glob
 # import RPi.GPIO as GPIO
-import sys, os, signal
+import sys, os, signal, datetime
 import psycopg2
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
@@ -19,6 +19,8 @@ global pumpEnabled
 pumpEnabled = False
 numberOfSensors = 2
 mode = ''
+startTime = int(time.time()) # Get application start time
+
 # This helper is used to convert booleans from database read as a string to Pythons' bool type
 def str_to_bool(s):
     s = s.decode('utf-8')
@@ -28,6 +30,7 @@ def str_to_bool(s):
         return False
     else:
         raise ValueError
+
 # Setup initial data into Redis, if they are not defined there
 def initialSetup():
     automaticControl = r.get('automaticControl')
@@ -90,26 +93,50 @@ def read_temperature_from_sensors():
             r.set('left_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "0301977967aa").get_temperature())
         except:
             r.set('left_sensor_temperature', "Czujnik prawy nie odpowiada!")
+            resetW1()
         # Read temperatures from the middle sensor
         try:
             r.set('middle_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797798ac5").get_temperature())
         except:
             r.set('middle_sensor_temperature', "Czujnik środkowy nie odpowiada!")
+            resetW1()
         # Read temperatures from the right sensor
         try:
             r.set('right_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "030797793bcd").get_temperature())
         except:
             r.set('right_sensor_temperature', "Czujnik prawy nie odpowiada!")
+            resetW1()
         # Read temperatures from water heat tank
         try:
             r.set('tank_sensor_temperature', W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, "03019779181c").get_temperature())
         except:
             r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
+            resetW1()
         # Save temperatures to database once per every even minutes
         if datetime.datetime.now().minute % 2 == 0 and (int(time.time()) - lastSave > 60):
             lastSave = int(time.time())
-            cursor.execute(insertQuery, (float(r.get('left_sensor_temperature')), float(r.get('middle_sensor_temperature')), float(r.get('right_sensor_temperature')), float(r.get('tank_sensor_temperature')), datetime.datetime.now()))
+            cursor.execute(insertQuery, (saveTemperatureToDb(r.get('left_sensor_temperature')), saveTemperatureToDb(r.get('middle_sensor_temperature')), saveTemperatureToDb(r.get('right_sensor_temperature')), saveTemperatureToDb(r.get('tank_sensor_temperature')), datetime.datetime.now()))
             connection.commit()
+def saveTemperatureToDb(temp):
+    parsedTemp = ''
+    try:
+        parsedTemp = float(temp)
+    except:
+        parsedTemp = -1
+    return parsedTemp
+
+# Reset sensors using hardware relay (for data line) and manageable GPIO pin (for power line)
+def resetW1():
+    # Don't disable power earlier than 2 minutes (120 seconds) after application boot:
+    if int(time.time()) - startTime > 120:
+        GPIO.output(12, GPIO.LOW) # disable power line for sensors
+        GPIO.output(13, GPIO.LOW) # disable data line for sensors
+        time.sleep(5) # cut off the power from sensors for 15 seconds to let them reset
+        GPIO.output(13, GPIO.HIGH) # enable data line for sensors again
+        GPIO.output(12, GPIO.HIGH) # enable power line for sensors again
+        time.sleep(5)
+   
+
 # Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
 # #Tragic
 # #Masakraaaaaaa
@@ -164,6 +191,8 @@ if mode:
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(11, GPIO.OUT, initial=GPIO.HIGH)
     GPIO.setup(12, GPIO.OUT, initial=GPIO.HIGH)
+    GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
+
     # Launch new thread for pump control
     thread = threading.Thread(target=enable_pump, args=())
     thread.should_still_be_running = True

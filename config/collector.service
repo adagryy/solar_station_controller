@@ -10,10 +10,11 @@ Conflicts=getty@tty1.service
 [Service]
 User=root
 Type=simple
-ExecStart=/usr/bin/python3 /<you_app_path>/collector.py
+ExecStart=/opt/mirrorcontroller/env/bin/python3 /opt/mirrorcontroller/collector.py
 StandardInput=tty-force
 Restart=on-failure
 RestartSec=5s
+EnvironmentFile=/opt/mirrorcontroller/credentials
 
 [Install]
 WantedBy=multi-user.target

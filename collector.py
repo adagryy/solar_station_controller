@@ -54,8 +54,8 @@ def initialSetup():
         r.set('temperatureReadInterval', '2')
     global mode
     if not prodMode:
-        mode = True
-        r.set('prodMode', 'True')
+        mode = False
+        r.set('prodMode', 'False')
     else:
     	mode = str_to_bool(prodMode)
 

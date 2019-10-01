@@ -29,7 +29,7 @@ Enter virtual environment:
  
 Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis), w1thermsensor (package for reading temperature from sensors)
 	
-	$ pip3.7 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor RPi.GPIO
+	$ pip3.7 install -U psutil Django Daphne Redis psycopg2 channels channels_redis w1thermsensor RPi.GPIO
 
 Copy source code of application from this repository to <your_app_path>
 
@@ -49,3 +49,7 @@ Then enable systemd service:
 	$ systemctl enable daphne.service
 	$ systemctl start daphne.service
 
+By default system tries to run in development mode. If you want to run in production (only available on Raspberry PI), you should insert into redis under key "prodMode" value "True" in your Python3.7 console:
+	$ import redis
+	$ r = redis.Redis(host='localhost', port=6379, db=0)
+	$ r.set('prodMode', 'False')

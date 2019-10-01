@@ -21,7 +21,7 @@ After installing database engines you should configure PostgreSQL database accor
 To run this project create your main app directory and virtual environment. You should do it in this way:
 	
 	$ mkdir <your_app_path> && cd <your_app_path>
-	$ virtualenv -p /usr/bin/python3 env
+	$ python3.7 -m venv env
 
 Enter virtual environment:
 	
@@ -29,7 +29,7 @@ Enter virtual environment:
  
 Then install dependencies: Django, Daphne (ASGI server), Redis, psycopg2 (module for PostgreSQL database), channels library, channels_redis (library for interfacing channels with Redis), w1thermsensor (package for reading temperature from sensors)
 	
-	$ pip3 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor RPi.GPIO
+	$ pip3.7 install -U Django Daphne Redis psycopg2 channels channels_redis w1thermsensor RPi.GPIO
 
 Copy source code of application from this repository to <your_app_path>
 
@@ -40,7 +40,7 @@ Now run necessary software for GPIO:
 
 Finally you can run development server:
 
-	$ python3 manage.py runserver
+	$ python3.7 manage.py runserver
 
 PRODUCTION:
 To run in production mode use Daphne ASGI server and remember to set Debug in mirrors/settings.py to False.

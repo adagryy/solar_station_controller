@@ -9,16 +9,19 @@ import glob
 # import RPi.GPIO as GPIO
 import sys, os, signal, datetime
 import psycopg2
+
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
+
 # Establish connection to Postgresql database
 connection = psycopg2.connect(user = "solar", password = os.environ['DBPASSWORD'], host = "127.0.0.1", port = "5432", database = "solar")
 cursor = connection.cursor()
 insertQuery = "INSERT INTO  webapp_temperature (\"leftSensorTemperature\", \"middleSensorTemperature\", \"rightSensorTemperature\", \"tankSensorTemperature\", \"dateOfReading\") VALUES (%s,%s,%s,%s,%s)"
+
 global pumpEnabled
 pumpEnabled = False
-numberOfSensors = 2
-mode = ''
+
+mode = '' # Decides if app should run in production mode (on Raspberry PI hardware) or in development mode (machines without real, but mocked GPIO, sensors etc)
 startTime = int(time.time()) # Get application start time
 
 # This helper is used to convert booleans from database read as a string to Pythons' bool type
@@ -55,6 +58,7 @@ def initialSetup():
         r.set('prodMode', 'True')
     else:
     	mode = str_to_bool(prodMode)
+
 # Enables pump for specific amount of time in new thread
 def enable_pump():
     currentRun = lastTimePumpEnabled = 0 #  lastTimePumpEnabled - remember, when pump was last time enabled - it can change state at least 10s from previous state change.
@@ -82,6 +86,7 @@ def enable_pump():
             # print("Pump state: OFF")
             if not GPIO.input(11): # Ensure that pump is already running
                 GPIO.output(11, GPIO.HIGH) # Disable power for pump
+
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors():
     t = threading.currentThread()
@@ -115,15 +120,8 @@ def read_temperature_from_sensors():
         # Save temperatures to database once per every even minutes
         if datetime.datetime.now().minute % 2 == 0 and (int(time.time()) - lastSave > 60):
             lastSave = int(time.time())
-            cursor.execute(insertQuery, (saveTemperatureToDb(r.get('left_sensor_temperature')), saveTemperatureToDb(r.get('middle_sensor_temperature')), saveTemperatureToDb(r.get('right_sensor_temperature')), saveTemperatureToDb(r.get('tank_sensor_temperature')), datetime.datetime.now()))
+            cursor.execute(insertQuery, (isNumber(r.get('left_sensor_temperature')), isNumber(r.get('middle_sensor_temperature')), isNumber(r.get('right_sensor_temperature')), isNumber(r.get('tank_sensor_temperature')), datetime.datetime.now()))
             connection.commit()
-def saveTemperatureToDb(temp):
-    parsedTemp = ''
-    try:
-        parsedTemp = float(temp)
-    except:
-        parsedTemp = -1
-    return parsedTemp
 
 # Reset sensors using hardware relay (for data line) and manageable GPIO pin (for power line)
 def resetW1():
@@ -136,52 +134,38 @@ def resetW1():
         GPIO.output(12, GPIO.HIGH) # enable power line for sensors again
         time.sleep(5)
    
-
-# Method is used for automatic control of temperature sensors, which sometimes are crashing from unknown reason and then must be switched off using relay, and then switched on again
-# #Tragic
-# #Masakraaaaaaa
-# :(
-# Fake sensors, drivers - no idea!
-def control_temperature_sensors():
-    time.sleep(60) # suspend at the beginning of the script controlling sensors
-    t = threading.currentThread()
-    while getattr(t, "should_still_be_running", True):
-        time.sleep(5)
-        foldersCount = len(glob.glob("/sys/bus/w1/devices/*"))
-        if foldersCount <= numberOfSensors:
-            time.sleep(60) # After detecting sensor crash we must wait for some amount of time, because resetting sensors immediately doesn't bring any positive result; in other words: crashing sensors is not short-timed process rather long (1-2 minutes)
-            GPIO.output(12, GPIO.LOW) # disable power for sensors
-            time.sleep(15) # cut off the power from sensors for 15 seconds to let them reset
-            GPIO.output(12, GPIO.HIGH) # enable power for sensors again
 # Decides if pump should be enabled
 def should_pump_be_enabled(left, middle, right, launching):
     return (left >= launching or middle >= launching or right >= launching) and str_to_bool(r.get('automaticControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
+
 def isNumber(item):
     try:
         return float(item)
     except ValueError:
         return -1000
+
 # Return CPU temperature as a character string
 def getCPUtemperature():
     res = os.popen('vcgencmd measure_temp').readline()
     return(res.replace("temp=","").replace("'C\n",""))
+
 # Handler for stopping/killing application gracefully
-def handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread):
+def handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread):
     thread.should_still_be_running = False
     temperatureThread.should_still_be_running = False
-    controlThread.should_still_be_running = False
     thread.join()
     temperatureThread.join()
-    controlThread.join()
     print("Pump thread state (False = disabled, True: enabled):  " + str(thread.isAlive()))
     print("Temperature sensors thread state (False = disabled, True: enabled):  " + str(temperatureThread.isAlive()))
-    print("Sensors control thread state (False = disabled, True: enabled):  " + str(controlThread.isAlive()))
     print()
+
 # ---------------------------------------------------------------
 # ---------------------------------------------------------------
 # ---------------------------------------------------------------
+#
 # Start executing script
 initialSetup()
+
 # It is not possible to connect i.e. temperature sensors to the development machine, so that we must run script with parameters determining if script should run in real (production) mode or in development mode (with mocked temperature sensors, mocked pump control etc)
 if mode:
     print('Started backend in PRODUCTION mode')
@@ -201,10 +185,7 @@ if mode:
     temperatureThread = threading.Thread(target=read_temperature_from_sensors, args=())
     temperatureThread.should_still_be_running = True
     temperatureThread.start()
-    # Launch new thread for controlling when temperature sensors crash
-    controlThread = threading.Thread(target=control_temperature_sensors, args=())
-    controlThread.should_still_be_running = True
-    controlThread.start()
+
     signal.signal(signal.SIGTERM, handleStopSignalsOrKeyboardInterrupt)
     signal.signal(signal.SIGTSTP, handleStopSignalsOrKeyboardInterrupt)
     signal.signal(signal.SIGHUP, handleStopSignalsOrKeyboardInterrupt)
@@ -223,9 +204,9 @@ if mode:
             # Get CPU temperature
             r.set('cpu_temperature', getCPUtemperature())
     except KeyboardInterrupt:
-        handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread)
+        handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread)
     except Exception:
-        handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread, controlThread)
+        handleStopSignalsOrKeyboardInterrupt(thread, temperatureThread)
         print("Unknown error!")
     finally:
         GPIO.cleanup()

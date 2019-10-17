@@ -45,7 +45,7 @@
   </tbody>
 </table>
 <hr style="margin-bottom:5px !important; margin-top:5px !important; " />
-<h3>Dane systemu</h3>
+<h3>Dane systemu operacyjnego serwera</h3>
 <table class="table table-striped table-hover">
   <thead>
     <tr class="table-active">
@@ -124,116 +124,9 @@
     });
   </script>
   <script type="text/javascript" src="/static/js/Chart.bundle.min.js"></script>
+  <script type="text/javascript" src="/static/js/chartings.js"></script>
   <script>
-    $(document).ready(function(){
-      // // Get data from server for drawin on the chart
-      // let dataForChart = await fetch('https://' + window.location.host + '/viewer/drawChart/');
-      // let responseBody = await dataForChart.json();
-      // console.log(responseBody);
-
-      var ctx = document.getElementById('myChart');
-      var timeFormat = 'MM/DD/YYYY HH:mm';
-      console.log("chartings")
-      var myChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-              "labels":["11:00","12:00","13:00","14:00","15:00"],
-              "datasets":[{
-                  label: 'Czujnik lewy',
-                  // backgroundColor: 'Green',
-                  fill: false,
-                  borderColor: 'DarkGreen',
-                  data: [
-                              {
-                      x: 1,
-                      y: 20
-                    }, {
-                      x: 2,
-                      y: 40
-                    }, {
-                      x: 3,
-                      y: 75
-                    }
-                  ]
-              },{
-                  label: 'Czujnik środkowy',
-                  // backgroundColor: 'Green',
-                  fill: false,
-                  borderColor: 'Orange',
-                  data: [
-                              {
-                      x: 1,
-                      y: 10
-                    }, {
-                      x: 2,
-                      y: 15
-                    }, {
-                      x: 3,
-                      y: 55
-                    }
-                  ]
-              },{
-                  label: 'Czujnik prawy',
-                  // backgroundColor: 'Green',
-                  fill: false,
-                  borderColor: 'yellow',
-                  data: [
-                              {
-                      x: 1,
-                      y: 15
-                    }, {
-                      x: 2,
-                      y: 70
-                    }, {
-                      x: 3,
-                      y: 65
-                    }
-                  ]
-              },{
-                  label: 'Czujnik w zbiorniku',
-                  backgroundColor: 'DarkRed',
-                  borderColor: 'Red',
-                  data: [
-                              {
-                      x: 1,
-                      y: 20
-                    }, {
-                      x: 2,
-                      y: 30
-                    }, {
-                      x: 3,
-                      y: 50
-                    },
-                    {
-                      x: 3,
-                      y: 50
-                    },{
-                      x: 3,
-                      y: 50
-                    }
-                  ]
-              }]          
-          },
-          options: {
-            responsive: true,
-            scales: {
-              xAxes: [{
-                display: true,
-                scaleLabel: {
-                  display: true,
-                  labelString: 'Godzina'
-                }
-              }],
-              yAxes: [{
-                display: true,
-                scaleLabel: {
-                  display: true,
-                  labelString: 'Temperatura'
-                }
-              }]
-            }
-          }
-      });
-    });
+      drawChart(document.getElementById('myChart')); // Draw a chart when page is loaded
+      setInterval(function(){ drawChart(document.getElementById('myChart')); }, 299000); // Then refresh the chart almost every 5 minutes
   </script>
 {% endblock %}

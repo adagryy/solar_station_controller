@@ -17,7 +17,7 @@
   </div>
   <div class="form-group">
     <label for="pumpLaunchingTemperature">Temperatura załączenia pompki (0-100&#8451;)</label>
-    <input id="pumpLaunchingTemperature" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Czas (w sekundach)" value="{{pumpLaunchingTemperature}}">
+    <input id="pumpLaunchingTemperature" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Temperatura (w &#8451;)" value="{{pumpLaunchingTemperature}}">
     {% if form.pumpLaunchingTemperature.errors %}
       {% for error in form.pumpLaunchingTemperature.errors %}
           <small class="text-danger">{{ error }}</small>

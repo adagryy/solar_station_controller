@@ -126,7 +126,7 @@
   <script type="text/javascript" src="/static/js/Chart.bundle.min.js"></script>
   <script type="text/javascript" src="/static/js/chartings.js"></script>
   <script>
-      drawChart(document.getElementById('myChart'), 5); // Draw a chart when page is loaded
-      setInterval(function(){ drawChart(document.getElementById('myChart'), 5); }, 299000); // Then refresh the chart almost every 5 minutes
+      drawChart(document.getElementById('myChart'), 5, 10); // Draw a chart when page is loaded
+      setInterval(function(){ drawChart(document.getElementById('myChart'), 5, 10); }, 299000); // Then refresh the chart almost every 5 minutes
   </script>
 {% endblock %}

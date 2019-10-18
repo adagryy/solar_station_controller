@@ -1,12 +1,19 @@
-async function drawChart(ctx, readingInterval) {
+async function drawChart(ctx, readingInterval, xDomain) {
     // Get data from server for drawin on the chart
     let dataForChart = await fetch('https://' + window.location.host + '/viewer/drawChart/');
     let responseBody = await dataForChart.json();
 
-    // console.log(responseBody);
     let chartLabels = createXAsixLabels(responseBody, readingInterval);
-
     let chartData = generateDataForCharts(responseBody);
+
+    if (xDomain < 24) {
+        chartLabels = chartLabels.slice(-xDomain * 12); // xDomain - is a number of hours to be displayed on x axis
+        chartData.leftSensorReadings = chartData.leftSensorReadings.slice(-xDomain * 12);
+        chartData.middleSensorReadings = chartData.middleSensorReadings.slice(-xDomain * 12);
+        chartData.rightSensorReadings = chartData.rightSensorReadings.slice(-xDomain * 12);
+        chartData.tankSensorReadings = chartData.tankSensorReadings.slice(-xDomain * 12);
+    }
+    console.log()
 
     var myChart = new Chart(ctx, {
         type: 'line',

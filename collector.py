@@ -118,10 +118,16 @@ def read_temperature_from_sensors():
             r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
             resetW1()
         # Save temperatures to database once per every even minutes
-        if datetime.datetime.now().minute % 2 == 0 and (int(time.time()) - lastSave > 60):
-            lastSave = int(time.time())
-            cursor.execute(insertQuery, (isNumber(r.get('left_sensor_temperature')), isNumber(r.get('middle_sensor_temperature')), isNumber(r.get('right_sensor_temperature')), isNumber(r.get('tank_sensor_temperature')), datetime.datetime.now()))
-            connection.commit()
+        if datetime.datetime.now().minute % 5 == 0 and (int(time.time()) - lastSave > 60):            
+            left = isNumber(r.get('left_sensor_temperature'))
+            middle = isNumber(r.get('middle_sensor_temperature'))
+            right = isNumber(r.get('right_sensor_temperature'))
+            tank = isNumber(r.get('tank_sensor_temperature'))
+            if left > -1000 and middle > -1000 and right > -1000 and tank > -1000:
+                lastSave = int(time.time())
+                cursor.execute(insertQuery, (left, middle, right, tank, datetime.datetime.now()))
+                connection.commit()
+
 
 # Reset sensors using hardware relay (for data line) and manageable GPIO pin (for power line)
 def resetW1():

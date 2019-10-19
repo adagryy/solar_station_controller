@@ -69,7 +69,7 @@
 </table>
 <div class="form-group">
   <label for="pumpLaunchingTemperature">Czas na wykresie</label>
-  <input id="resetChartInput" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Temperatura (w &#8451;)" value="10">
+  <input id="resetChartInput" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Czas na osi (w godzinach)" value="10" min="1" max="24">
 </div>
 <button id="resetChartButton" type="button" onclick="resetChart()" class="btn btn-primary">Resetuj wykres</button>
 <br>
@@ -133,7 +133,10 @@
   <script>
       function resetChart(){
         let timeDomain = document.getElementById('resetChartInput').value || 10;
-        drawChart(document.getElementById('myChart'), 5, timeDomain);
+        let normalizedTimeDomain = Math.round(timeDomain);
+        if (normalizedTimeDomain >= 1 && normalizedTimeDomain <= 24){
+          drawChart(document.getElementById('myChart'), 5, timeDomain);
+        }        
       }
       drawChart(document.getElementById('myChart'), 5, 10); // Draw a chart when page is loaded
       setInterval(function(){ drawChart(document.getElementById('myChart'), 5, 10); }, 299000); // Then refresh the chart almost every 5 minutes

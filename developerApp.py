@@ -61,7 +61,7 @@ def read_temperature_from_sensors_dev_mode():
         date = datetime.datetime
         
         # Save temperatures to database once per every 5 minutes 
-        if date.now().minute % 5 == 0 and (int(time.time()) - lastSave > 60): # Save measurement every five minutes and save one measurement minute, whichc is modulo 5
+        if date.now().minute % 1 == 0 and (int(time.time()) - lastSave > 60): # Save measurement every five minutes and save one measurement minute, whichc is modulo 5
             lastSave = int(time.time())
             cursor.execute(insertQuery, (float(r.get('left_sensor_temperature')), float(r.get('middle_sensor_temperature')), float(r.get('right_sensor_temperature')), float(r.get('tank_sensor_temperature')), datetime.datetime.now()))
             p.commit()

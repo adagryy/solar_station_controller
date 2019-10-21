@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def chartData(request):
     time_threshold = datetime.now() - timedelta(hours=24)
-    result = list(Temperature.objects.filter(dateOfReading__gt=time_threshold).values())
+    result = list(Temperature.objects.filter(dateOfReading__gt=time_threshold).order_by('dateOfReading').values())
     return HttpResponse(json.dumps(result, sort_keys=True, indent=1, cls=DjangoJSONEncoder))
 
 @login_required

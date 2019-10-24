@@ -27,11 +27,24 @@ def enable_pump_dev_mode():
             previousState = True
             r.set('pump_state', 1) # Save to database, that pump is enabled
             print("Pump state: ON")
+            pauseAfterPumpStateChange(True)
         if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
             previousState = False
             r.set('pump_state', 0) # Save to database, that pump is disabled
             print("Pump state: OFF")
+            pauseAfterPumpStateChange(False)
+
+# Pause pump thread after pump state change (after pump was enabled or disabled)
+def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was enabled, False means pump was disabled
+    if stateChange: # Pause pump thread when pump was enabled
+        pumpWorkingTime = isNumber(r.get('pumpWorkingTime'))
+        if pumpWorkingTime > 10:
+            time.sleep(pumpWorkingTime)
+        else:
+            time.sleep(10)    
+    else: # Pause pump thread when pump was disabled
+        time.sleep(10)
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors_dev_mode():
     t = threading.currentThread()

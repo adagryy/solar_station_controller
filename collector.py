@@ -9,6 +9,8 @@ import glob
 # import RPi.GPIO as GPIO
 import sys, os, signal, datetime
 import psycopg2
+from threading import Lock
+lock = Lock()
 
 # Establish connection with Redis store
 r = redis.Redis(host='localhost', port=6379, db=0)
@@ -79,6 +81,7 @@ def enable_pump():
             # print("Pump state: ON")
             if GPIO.input(11): # Ensure that pump is already stopped
                 GPIO.output(11, GPIO.LOW) # Enable power for pump
+                pauseAfterPumpStateChange(True)
         if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
             previousState = False
@@ -86,6 +89,18 @@ def enable_pump():
             # print("Pump state: OFF")
             if not GPIO.input(11): # Ensure that pump is already running
                 GPIO.output(11, GPIO.HIGH) # Disable power for pump
+                pauseAfterPumpStateChange(False)
+
+# Pause pump thread after pump state change (after pump was enabled or disabled)
+def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was enabled, False means pump was disabled
+    if stateChange: # Pause pump thread when pump was enabled
+        pumpWorkingTime = isNumber(r.get('pumpWorkingTime'))
+        if pumpWorkingTime > 10:
+            time.sleep(pumpWorkingTime)
+        else:
+            time.sleep(10)    
+    else: # Pause pump thread when pump was disabled
+        time.sleep(10)
 
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors():

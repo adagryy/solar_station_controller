@@ -131,12 +131,12 @@
   <script type="text/javascript" src="/static/js/Chart.bundle.min.js"></script>
   <script type="text/javascript" src="/static/js/chartings.js"></script>
   <script>
-      var resetRef = undefined;
+      let resetRef = undefined;
       async function initializeChart(){
-          resetRef = await drawChart(document.getElementById('myChart'), 5, 10); // Draw a chart when page is loaded
-          setInterval(function(){ 
+          resetRef = await drawChart(document.getElementById('myChart'), 10); // Draw a chart when page is loaded
+          setInterval(async function(){ 
             resetRef();
-            drawChart(document.getElementById('myChart'), 5, 10); 
+            resetRef = await drawChart(document.getElementById('myChart'), 10); 
           }, 299000); // Then refresh the chart almost every 5 minutes
       } 
       async function resetChart(){
@@ -144,7 +144,7 @@
         let timeDomain = document.getElementById('resetChartInput').value || 10;
         let normalizedTimeDomain = Math.round(timeDomain);
         if (normalizedTimeDomain >= 1 && normalizedTimeDomain <= 24){
-          resetRef = await drawChart(document.getElementById('myChart'), 5, timeDomain);
+          resetRef = await drawChart(document.getElementById('myChart'), timeDomain);
         }        
       }
       initializeChart();

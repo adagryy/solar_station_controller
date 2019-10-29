@@ -133,10 +133,10 @@
   <script>
       let resetRef = undefined;
       async function initializeChart(){
-          resetRef = await drawChart(document.getElementById('myChart'), 10); // Draw a chart when page is loaded
+          resetRef = await drawChart(document.getElementById('myChart'), document.getElementById('resetChartInput').value || 10); // Draw a chart when page is loaded
           setInterval(async function(){ 
             resetRef();
-            resetRef = await drawChart(document.getElementById('myChart'), 10); 
+            resetRef = await drawChart(document.getElementById('myChart'), document.getElementById('resetChartInput').value || 10); 
           }, 299000); // Then refresh the chart almost every 5 minutes
       } 
       async function resetChart(){

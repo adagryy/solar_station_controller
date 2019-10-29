@@ -74,7 +74,7 @@ def enable_pump():
         time.sleep(0.5)
         currentRun = int(time.time()) # we measure time to compare when pump was last time enabled/disabled to avoid enabling/disabling pump too fast (i.e 3 time per second)
         # Flag saying pump should be enabled
-        if (pumpEnabled or str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpEnabled > 10) and (currentRun - lastTimePumpDisabled > 10) and not previousState: # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
+        if pumpEnabled and (currentRun - lastTimePumpDisabled > 10) and not previousState: # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
             lastTimePumpEnabled = int(time.time())
             previousState = True
             r.set('pump_state', 1) # Save to database, that pump is enabled
@@ -82,7 +82,7 @@ def enable_pump():
             if GPIO.input(11): # Ensure that pump is already stopped
                 GPIO.output(11, GPIO.LOW) # Enable power for pump
                 pauseAfterPumpStateChange(True)
-        if (not pumpEnabled and not str_to_bool(r.get('manualControl'))) and (currentRun - lastTimePumpDisabled > 10) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
+        if (not pumpEnabled) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
             previousState = False
             r.set('pump_state', 0) # Save to database, that pump is disabled
@@ -94,6 +94,10 @@ def enable_pump():
 # Pause pump thread after pump state change (after pump was enabled or disabled)
 def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was enabled, False means pump was disabled
     if stateChange: # Pause pump thread when pump was enabled
+        manualControl = str_to_bool(r.get('manualControl'))
+        if manualControl:
+            time.sleep(10)
+            return
         pumpWorkingTime = isNumber(r.get('pumpWorkingTime'))
         if pumpWorkingTime > 10:
             time.sleep(pumpWorkingTime)
@@ -157,7 +161,7 @@ def resetW1():
    
 # Decides if pump should be enabled
 def should_pump_be_enabled(left, middle, right, launching):
-    return (left >= launching or middle >= launching or right >= launching) and str_to_bool(r.get('automaticControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
+    return ((left >= launching or middle >= launching or right >= launching) and str_to_bool(r.get('automaticControl'))) or str_to_bool(r.get('manualControl')) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
 
 def isNumber(item):
     try:

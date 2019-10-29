@@ -38,6 +38,12 @@ def enable_pump_dev_mode():
 # Pause pump thread after pump state change (after pump was enabled or disabled)
 def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was enabled, False means pump was disabled
     if stateChange: # Pause pump thread when pump was enabled
+        manualControl = str_to_bool(r.get('manualControl'))
+        if manualControl:
+            print("Pump launched manually")
+            time.sleep(10)            
+            return
+        print("Pump launched automatically")
         pumpWorkingTime = isNumber(r.get('pumpWorkingTime'))
         if pumpWorkingTime > 10:
             time.sleep(pumpWorkingTime)

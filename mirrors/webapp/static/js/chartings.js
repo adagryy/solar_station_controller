@@ -7,7 +7,8 @@ async function drawChart(ctx, xDomain) {
         myChart.destroy();
     }
 
-    let chartLabels = [], chartData = [];
+    let chartLabels = [],
+        chartData = [];
     if (responseBody.length > 0) {
         chartLabels = createXAsixLabels(responseBody);
         chartData = generateDataForCharts(responseBody);
@@ -100,4 +101,17 @@ function generateDataForCharts(array) {
         tankSensorReadings.push({ x: formattedDate, y: item.tankSensorTemperature });
     });
     return { leftSensorReadings, middleSensorReadings, rightSensorReadings, tankSensorReadings }
+}
+
+function dayInYear(element, element_label, latitude) {
+    let now = new Date();
+    let start = new Date(now.getFullYear(), 0, 0);
+    let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+    let oneDay = 1000 * 60 * 60 * 24;
+    let N = Math.floor(diff / oneDay); // Day of year
+    let rad = (degrees) => { return degrees * (Math.PI / 180); } // Converts degrees to radians
+    let deg = (radians) => { return (180 * radians) / Math.PI; } // Converts radians to degrees
+    let rays_angle = 90 - latitude - deg(Math.asin((0.39779 * Math.cos(rad(0.98565 * (N + 10) + 1.914 * Math.sin(rad(0.98565 * (N - 2)))))))); // Formula for evaluating the angle between the rays of the Sun and the plane of the Earth's equator; https://en.wikipedia.org/wiki/Position_of_the_Sun#Calculations
+    element_label.innerHTML = `Kąt padania promieni słonecznych w południe (52&#176;N, ` + now.toLocaleDateString().slice(0, 10) + `)`;
+    element.innerHTML = (Math.round(rays_angle * 100) / 100).toString() + ` &#176;`;
 }

@@ -70,6 +70,11 @@
       <td id="rays_angle_label">Kąt padania promieni słonecznych w południe(...)</td>
       <td id="rays_angle">-</td>
     </tr>
+    <tr class="table-primary">
+      <th scope="row">3</th>
+      <td id="rays_angle_label_any">Kąt padania promieni słonecznych (...)</td>
+      <td id="rays_angle_any">-</td>
+    </tr>
   </tbody>
 </table>
 <div class="form-group">
@@ -153,7 +158,12 @@
         }        
       }
 
-      dayInYear(document.getElementById('rays_angle'), document.getElementById('rays_angle_label'), 52); // Get angle of sun rays arriving to the earth at the 52 degrees geographical latitude
+      dayInYear(document.getElementById('rays_angle'), 
+                document.getElementById('rays_angle_label'), 
+                document.getElementById('rays_angle_any'), 
+                document.getElementById('rays_angle_label_any'), 
+                52.2, 
+                21); // Get angle of sun rays arriving to the earth at the 52 degrees geographical latitude
       initializeChart();
 
   </script>

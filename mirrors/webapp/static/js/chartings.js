@@ -1,6 +1,6 @@
 async function drawChart(ctx, xDomain) {
     // Get data from server for drawin on the chart
-    let dataForChart = await fetch('https://' + window.location.host + '/viewer/drawChart/');
+    let dataForChart = await fetch('http://' + window.location.host + '/viewer/drawChart/');
     let responseBody = await dataForChart.json();
 
     let resetRef = function() {
@@ -103,9 +103,14 @@ function generateDataForCharts(array) {
     return { leftSensorReadings, middleSensorReadings, rightSensorReadings, tankSensorReadings }
 }
 
-function dayInYear(element, element_label, any, any_label, latitude, longitude = 21.91) {
-    let now = new Date();
-    // now = new Date("2019-11-28T07:17:16.267Z");
+function dayInYear(element, element_label, any, any_label, latitude, longitude = 21.91, now = new Date()) {
+    // let ;
+    // now = new Date("2019-12-11T12:00:16.267Z");
+    // console.log('1. ' + now.toISOString().slice(11,19));
+    let localNow = now;
+    now = new Date(now.getTime() + longitude * 4 * 60000);
+    // console.log('2. ' + now.toISOString().slice(11,19));
+    // console.log();
 
     let start = new Date(now.getFullYear(), 0, 0); // First day of current year
     let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000); // Calculate, how many miliseconds left from beginning of the year 
@@ -146,17 +151,36 @@ function dayInYear(element, element_label, any, any_label, latitude, longitude =
     // For instance if current time local time is 14:08 UTC (15:08 CET, 16:08 CEST [14:08 UTC is 128 minutes after 12:00 UTC]), then the Sun zenith longitude will be 32 degrees W (128 / 4 = 32).
     // Then supposing that the longitude of the point of measurement is 21.92 degrees E, then K2 is: K2 = 32 degrees W + 21.92 degrees W = 53.92 degrees (in calculations we do operation: 21.92 - (-32) = 53.92)
     // But above we have calculated "dateDifferenceInMinutes" 
-    let K2 = Math.abs(longitude - currentZenithalSunLongitude);
+    let K2 = calculateK2(longitude, currentZenithalSunLongitude);
 
-    if(K2 > 90) {
-      K2 = 90;
-    }
+    // if(K2 > 90) {
+    //   K2 = 90;
+    // }
 
     // Final angle of Sun rays incidence on Earth in the point of measurement
     let final = 90 - deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1));
-    console.log("Różnica: " + K2);
-    console.log('Ostateczny wynik: ' + Math.round(final*100)/100);
+
+    let refracted = 1.02 * ctg(final + (10.3/(final+5.11)));
+
+    // console.log("Różnica: " + K2);
+    // console.log('Godzina UTC: ' + now.toISOString().slice(11, 19) + ', Godzina LOK: ' + localNow.toTimeString().slice(0,8) + ', Ostateczny wynik: ' + Math.round(final) + ', K1: ' + Math.round(K1) + ', K2: ' + Math.round(K2) + ', Różnica: ' + dateDifferenceInMinutes + ', Sun long: ' + Math.round(currentZenithalSunLongitude) + ', Rozwarcie: ' + Math.round(deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1))) + ', zenit: ' + Math.round(angle) + '; ' + currentZenithalSunLongitude + ", Refracted: " + deg(refracted));
     let hhmm_now = now.toTimeString().slice(0, 5);
     any_label.innerHTML = `Kąt padania promieni słonecznych (godzina: ` + hhmm_now + `, szerokość geogr: ` + latitude + `&#176;N, ` + now.toLocaleDateString().slice(0, 10) + `)`;
     any.innerHTML = (Math.round(final*100)/100).toString() + ` &#176;`;
 }
+
+function calculateK2(measurementLongitude, sunLongitude) {
+    // 
+    let convert180scaleTo360scale = (angle) => {
+      return angle < 0 ? 360 + angle : angle;
+    }
+
+    measurementLongitude = convert180scaleTo360scale(measurementLongitude);
+    sunLongitude = convert180scaleTo360scale(sunLongitude);
+
+    let angleDifference = Math.abs(measurementLongitude - sunLongitude);
+
+    return angleDifference > 180 ? 360 - angleDifference : angleDifference;
+}
+
+function ctg(x) { return 1 / Math.tan(x); }

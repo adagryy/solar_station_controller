@@ -1,6 +1,6 @@
 async function drawChart(ctx, xDomain) {
     // Get data from server for drawin on the chart
-    let dataForChart = await fetch('http://' + window.location.host + '/viewer/drawChart/');
+    let dataForChart = await fetch('https://' + window.location.host + '/viewer/drawChart/');
     let responseBody = await dataForChart.json();
 
     let resetRef = function() {
@@ -107,8 +107,8 @@ function dayInYear(element, element_label, any, any_label, latitude, longitude =
     // let ;
     // now = new Date("2019-12-11T12:00:16.267Z");
     // console.log('1. ' + now.toISOString().slice(11,19));
-    let localNow = now;
-    now = new Date(now.getTime() + longitude * 4 * 60000);
+    // let localNow = now;
+    // now = new Date(now.getTime() + longitude * 4 * 60000);
     // console.log('2. ' + now.toISOString().slice(11,19));
     // console.log();
 
@@ -122,6 +122,10 @@ function dayInYear(element, element_label, any, any_label, latitude, longitude =
     let noon_sun_declination = 90 - latitude + angle; // Angle of rays in noon relative to the local (given by both longitude and latitude) earth surface
     element_label.innerHTML = `Kąt padania promieni słonecznych w południe (52&#176;N, ` + now.toLocaleDateString().slice(0, 10) + `)`;
     element.innerHTML = (Math.round(noon_sun_declination * 100) / 100).toString() + ` &#176;`;
+
+    // Calculate angle between zenith and point of measurement
+    // Use dot product
+
 
     // Calculates difference in minutes from current UTC time to UTC noon and is calculated separately for western and eastern Earth hemisphere.
     // The range of "dateDifferenceInMinutes" is from range: <0, 720> minutes (for Sun zenithing longitudes from range 0 degrees W to 180 degrees W and separately for Sun zenithing longitudes from range 180 degrees E to 0 degrees E), NOT <0, 1440> minutes
@@ -138,49 +142,77 @@ function dayInYear(element, element_label, any, any_label, latitude, longitude =
     // Now we can easily calculate difference between longitude of Sun zenith point and the longitude of the point of measurement.
     if (now.getUTCHours() >= 12) {
         currentZenithalSunLongitude *= -1;
-    }
+    }      
 
-    // Suppose, that the point of measurement is the place on the Earth where you want to measure angle of sun rays incidence.
-    // Below K1 is the angle between two lines: 1). the line starting in Earth center and passing through the point of measurement and...
-    // 2). the line starting in Earth center and passing through the point where the sun is in zenith (sun noon in the point of measurement). Please notice, that these points HAVE THE SAME LONGITUDE (BOTH ARE ON THE SAME MERIDIAN).
-    // For instance if there is 22th June and your position is the latitude 52 degrees N, then the sun zenith is on latitude 23 degress N. So K1 variable will be as follows: K1 = 52 - 23 = 29 degrees
-    let K1 = Math.abs(latitude - angle); // Absolute value is used to make K1 positive, when latitude is southern and "angle" is also southern. For instance: -45 degrees S -(-12) degress S
 
-    // Similarly K2 is the angle between current Sun zenith longitude (notice Sun zenith longitude changes 1 degree every 4 minutes) and the longitude of the K1 point (which in fact is the longitude of the point of measurement). 
-    // Notice that these points HAVE THE SAME LATITUDE.
-    // For instance if current time local time is 14:08 UTC (15:08 CET, 16:08 CEST [14:08 UTC is 128 minutes after 12:00 UTC]), then the Sun zenith longitude will be 32 degrees W (128 / 4 = 32).
-    // Then supposing that the longitude of the point of measurement is 21.92 degrees E, then K2 is: K2 = 32 degrees W + 21.92 degrees W = 53.92 degrees (in calculations we do operation: 21.92 - (-32) = 53.92)
-    // But above we have calculated "dateDifferenceInMinutes" 
-    let K2 = calculateK2(longitude, currentZenithalSunLongitude);
+    let final = calculateAngleBetweenVectors(currentZenithalSunLongitude, angle, longitude, latitude);
+    let openingAngle = 90 - final;
+    // console.log("Dlugosc slonca: : " + currentZenithalSunLongitude + " Moja dlugosc: " + longitude)
+    any_label.innerHTML = `Kąt padania promieni słonecznych (godzina: ` + now.toTimeString().slice(0,8) + `, szerokość geogr: ` + latitude + `&#176;N, ` + now.toLocaleDateString().slice(0, 10) + `)`;
+    any.innerHTML = (Math.round(openingAngle*100)/100).toString() + ` &#176;`;
 
-    // if(K2 > 90) {
-    //   K2 = 90;
-    // }
+    // // Suppose, that the point of measurement is the place on the Earth where you want to measure angle of sun rays incidence.
+    // // Below K1 is the angle between two lines: 1). the line starting in Earth center and passing through the point of measurement and...
+    // // 2). the line starting in Earth center and passing through the point where the sun is in zenith (sun noon in the point of measurement). Please notice, that these points HAVE THE SAME LONGITUDE (BOTH ARE ON THE SAME MERIDIAN).
+    // // For instance if there is 22th June and your position is the latitude 52 degrees N, then the sun zenith is on latitude 23 degress N. So K1 variable will be as follows: K1 = 52 - 23 = 29 degrees
+    // let K1 = Math.abs(latitude - angle); // Absolute value is used to make K1 positive, when latitude is southern and "angle" is also southern. For instance: -45 degrees S -(-12) degress S
 
-    // Final angle of Sun rays incidence on Earth in the point of measurement
-    let final = 90 - deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1));
+    // // Similarly K2 is the angle between current Sun zenith longitude (notice Sun zenith longitude changes 1 degree every 4 minutes) and the longitude of the K1 point (which in fact is the longitude of the point of measurement). 
+    // // Notice that these points HAVE THE SAME LATITUDE.
+    // // For instance if current time local time is 14:08 UTC (15:08 CET, 16:08 CEST [14:08 UTC is 128 minutes after 12:00 UTC]), then the Sun zenith longitude will be 32 degrees W (128 / 4 = 32).
+    // // Then supposing that the longitude of the point of measurement is 21.92 degrees E, then K2 is: K2 = 32 degrees W + 21.92 degrees W = 53.92 degrees (in calculations we do operation: 21.92 - (-32) = 53.92)
+    // // But above we have calculated "dateDifferenceInMinutes" 
+    // let K2 = calculateK2(longitude, currentZenithalSunLongitude);
 
-    let refracted = 1.02 * ctg(final + (10.3/(final+5.11)));
+    // // if(K2 > 90) {
+    // //   K2 = 90;
+    // // }
 
-    // console.log("Różnica: " + K2);
-    // console.log('Godzina UTC: ' + now.toISOString().slice(11, 19) + ', Godzina LOK: ' + localNow.toTimeString().slice(0,8) + ', Ostateczny wynik: ' + Math.round(final) + ', K1: ' + Math.round(K1) + ', K2: ' + Math.round(K2) + ', Różnica: ' + dateDifferenceInMinutes + ', Sun long: ' + Math.round(currentZenithalSunLongitude) + ', Rozwarcie: ' + Math.round(deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1))) + ', zenit: ' + Math.round(angle) + '; ' + currentZenithalSunLongitude + ", Refracted: " + deg(refracted));
-    let hhmm_now = now.toTimeString().slice(0, 5);
-    any_label.innerHTML = `Kąt padania promieni słonecznych (godzina: ` + hhmm_now + `, szerokość geogr: ` + latitude + `&#176;N, ` + now.toLocaleDateString().slice(0, 10) + `)`;
-    any.innerHTML = (Math.round(final*100)/100).toString() + ` &#176;`;
+    // // Final angle of Sun rays incidence on Earth in the point of measurement
+    // let final = 90 - deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1));
+
+    // let refracted = 1.02 * ctg(final + (10.3/(final+5.11)));
+
+    // // console.log("Różnica: " + K2);
+    // console.log('Godzina UTC: ' + now.toISOString().slice(11, 19) + ', Godzina LOK: ' + localNow.toTimeString().slice(0,8) + ', Ostateczny wynik: ' + Math.round(final) 
+    //   + ', K1: ' + Math.round(K1) + ', K2: ' + Math.round(K2) + ', Różnica: ' + dateDifferenceInMinutes + ', Sun long: ' 
+    //   + Math.round(currentZenithalSunLongitude) + ', Rozwarcie: ' + Math.round(deg(Math.acos(Math.cos(rad(K1)) + Math.cos(rad(K2)) - 1)))
+    //   + ', zenit: ' + Math.round(angle) + '; ' + currentZenithalSunLongitude + ", Refracted: " + deg(refracted));
+    // let hhmm_now = now.toTimeString().slice(0, 5);
+    // console.log(angle + ", " + currentZenithalSunLongitude + "")
 }
 
-function calculateK2(measurementLongitude, sunLongitude) {
-    // 
-    let convert180scaleTo360scale = (angle) => {
-      return angle < 0 ? 360 + angle : angle;
+function calculateAngleBetweenVectors(sunLongitude, sunLatitude, longitude, latitude) {  
+  let R = 6371; 
+  let rad = (degrees) => { return degrees * (Math.PI / 180); } // Converts degrees to radians
+  let deg = (radians) => { return (180 * radians) / Math.PI; } // Converts radians to degrees
+  let zenith = {
+      x: R * Math.cos(rad(sunLatitude)) * Math.cos(rad(sunLongitude)),
+      y: R * Math.cos(rad(sunLatitude)) * Math.sin(rad(sunLongitude)),
+      z: R * Math.sin(rad(sunLatitude))
+    },
+    point = {
+      x: R * Math.cos(rad(latitude)) * Math.cos(rad(longitude)),
+      y: R * Math.cos(rad(latitude)) * Math.sin(rad(longitude)),
+      z: R * Math.sin(rad(latitude))
     }
-
-    measurementLongitude = convert180scaleTo360scale(measurementLongitude);
-    sunLongitude = convert180scaleTo360scale(sunLongitude);
-
-    let angleDifference = Math.abs(measurementLongitude - sunLongitude);
-
-    return angleDifference > 180 ? 360 - angleDifference : angleDifference;
+  let dotProduct = point.x*zenith.x + point.y*zenith.y + point.z*zenith.z;
+  let lengthProduct = Math.sqrt(point.x**2 + point.y**2 + point.z**2) * Math.sqrt(zenith.x**2 + zenith.y**2 + zenith.z**2);
+  return deg(Math.acos(dotProduct / lengthProduct));
 }
 
-function ctg(x) { return 1 / Math.tan(x); }
+// function calculateK2(measurementLongitude, sunLongitude) {
+//     // 
+//     let convert180scaleTo360scale = (angle) => {
+//       return angle < 0 ? 360 + angle : angle;
+//     }
+
+//     measurementLongitude = convert180scaleTo360scale(measurementLongitude);
+//     sunLongitude = convert180scaleTo360scale(sunLongitude);
+
+//     let angleDifference = Math.abs(measurementLongitude - sunLongitude);
+
+//     return angleDifference > 180 ? 360 - angleDifference : angleDifference;
+// }
+
+// function ctg(x) { return 1 / Math.tan(x); }

@@ -70,8 +70,8 @@
       <td id="rays_angle_label">Kąt padania promieni słonecznych w południe(...)</td>
       <td id="rays_angle">-</td>
     </tr>
-    <tr class="table-primary">
-      <th scope="row">3</th>
+    <tr class="table-warning">
+      <th scope="row">4</th>
       <td id="rays_angle_label_any">Kąt padania promieni słonecznych (...)</td>
       <td id="rays_angle_any">-</td>
     </tr>
@@ -142,12 +142,24 @@
   <script type="text/javascript" src="/static/js/chartings.js"></script>
   <script>
       let resetRef = undefined;
+      let anyAngle = () => {
+                              dayInYear( document.getElementById('rays_angle'), 
+                                document.getElementById('rays_angle_label'), 
+                                document.getElementById('rays_angle_any'), 
+                                document.getElementById('rays_angle_label_any'), 
+                                52.2, 
+                                22); // Get angle of sun rays arriving to the earth at the 52 degrees geographical latitude
+                            }
       async function initializeChart(){
           resetRef = await drawChart(document.getElementById('myChart'), document.getElementById('resetChartInput').value || 10); // Draw a chart when page is loaded
           setInterval(async function(){ 
             resetRef();
             resetRef = await drawChart(document.getElementById('myChart'), document.getElementById('resetChartInput').value || 10); 
           }, 299000); // Then refresh the chart almost every 5 minutes
+
+          setInterval(() => {
+            anyAngle();
+          }, 1000);
       } 
       async function resetChart(){
         resetRef();
@@ -158,13 +170,8 @@
         }        
       }
 
-      dayInYear(document.getElementById('rays_angle'), 
-                document.getElementById('rays_angle_label'), 
-                document.getElementById('rays_angle_any'), 
-                document.getElementById('rays_angle_label_any'), 
-                52.2, 
-                22); // Get angle of sun rays arriving to the earth at the 52 degrees geographical latitude
       initializeChart();
+      anyAngle();
 
       // var date = new Date();
 

@@ -104,14 +104,6 @@ function generateDataForCharts(array) {
 }
 
 function dayInYear(element, element_label, any, any_label, latitude, longitude = 21.91, now = new Date()) {
-    // let ;
-    // now = new Date("2019-12-11T12:00:16.267Z");
-    // console.log('1. ' + now.toISOString().slice(11,19));
-    // let localNow = now;
-    // now = new Date(now.getTime() + longitude * 4 * 60000);
-    // console.log('2. ' + now.toISOString().slice(11,19));
-    // console.log();
-
     let start = new Date(now.getFullYear(), 0, 0); // First day of current year
     let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000); // Calculate, how many miliseconds left from beginning of the year 
     let oneDay = 1000 * 60 * 60 * 24; // day in miliseconds <==> 24hours * 60 minutes* 60 seconds * 1000 miliseconds
@@ -201,18 +193,61 @@ function calculateAngleBetweenVectors(sunLongitude, sunLatitude, longitude, lati
   return deg(Math.acos(dotProduct / lengthProduct));
 }
 
-// function calculateK2(measurementLongitude, sunLongitude) {
-//     // 
-//     let convert180scaleTo360scale = (angle) => {
-//       return angle < 0 ? 360 + angle : angle;
-//     }
-
-//     measurementLongitude = convert180scaleTo360scale(measurementLongitude);
-//     sunLongitude = convert180scaleTo360scale(sunLongitude);
-
-//     let angleDifference = Math.abs(measurementLongitude - sunLongitude);
-
-//     return angleDifference > 180 ? 360 - angleDifference : angleDifference;
-// }
-
-// function ctg(x) { return 1 / Math.tan(x); }
+function drawSunriseSunset(ctx) {
+  var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            "labels": chartLabels,
+            "datasets": [{
+                label: 'Czujnik lewy',
+                // backgroundColor: 'Green',
+                fill: false,
+                borderColor: 'DarkGreen',
+                data: chartData.leftSensorReadings || []
+            }, {
+                label: 'Czujnik środkowy',
+                // backgroundColor: 'Green',
+                fill: false,
+                borderColor: 'Orange',
+                data: chartData.middleSensorReadings || []
+            }, {
+                label: 'Czujnik prawy',
+                // backgroundColor: 'Green',
+                fill: false,
+                borderColor: 'yellow',
+                data: chartData.rightSensorReadings || []
+            }, {
+                label: 'Czujnik w zbiorniku',
+                backgroundColor: 'DarkRed',
+                borderColor: 'Red',
+                data: chartData.tankSensorReadings || []
+            }]
+        },
+        options: {
+            elements: {
+                line: {
+                    tension: 0 // disables bezier curves
+                }
+            },
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Godzina'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Temperatura'
+                    }
+                }]
+            }
+        }
+    });
+  
+  return myChart;
+}

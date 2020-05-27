@@ -31,16 +31,20 @@ def mirrormanagement(request):
     if request.method == 'POST':
         managementData = ManagementForm(request.POST)
         if managementData.is_valid():
+            print("sdfdsafsda: " + str(managementData.cleaned_data['dynamicThresholdControl']))
             redisDbReference.set('automaticControl', str(managementData.cleaned_data['automaticControl']))
             redisDbReference.set('manualControl', str(managementData.cleaned_data['manualControl']))
+            redisDbReference.set('dynamicThresholdControl', str(managementData.cleaned_data['dynamicThresholdControl']))
             redisDbReference.set('pumpLaunchingTemperature', managementData.cleaned_data['pumpLaunchingTemperature'])        
             redisDbReference.set('pumpWorkingTime', managementData.cleaned_data['pumpWorkingTime'])
             redisDbReference.set('temperatureReadInterval', managementData.cleaned_data['temperatureReadInterval'])
-            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
+            redisDbReference.set('dynamicLaunchingTemperature', managementData.cleaned_data['dynamicLaunchingTemperature'])
+            
+            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'dynamicThresholdControl': str_to_bool(redisDbReference.get('dynamicThresholdControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1"), 'dynamicLaunchingTemperature': int(redisDbReference.get('dynamicLaunchingTemperature') or "-1")})
         else:
-            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
+            return render(request, 'management/management.html', {'form': managementData, 'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'dynamicThresholdControl': str_to_bool(redisDbReference.get('dynamicThresholdControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1"), 'dynamicLaunchingTemperature': int(redisDbReference.get('dynamicLaunchingTemperature') or "-1")})
     elif request.method == 'GET':
-        return render(request, 'management/management.html', {'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1")})
+        return render(request, 'management/management.html', {'automaticControl': str_to_bool(redisDbReference.get('automaticControl')), 'manualControl': str_to_bool(redisDbReference.get('manualControl')),'dynamicThresholdControl': str_to_bool(redisDbReference.get('dynamicThresholdControl')),'pumpLaunchingTemperature': int(redisDbReference.get('pumpLaunchingTemperature') or "-1"), 'pumpWorkingTime': int(redisDbReference.get('pumpWorkingTime') or "-1"), 'temperatureReadInterval': int(redisDbReference.get('temperatureReadInterval') or "-1"), 'dynamicLaunchingTemperature': int(redisDbReference.get('dynamicLaunchingTemperature') or "-1")})
     # What now?
     # return render(request, 'management/management.html', {})
 

@@ -16,6 +16,11 @@
     </label>
   </div>
   <div class="form-group">
+    <label class="form-check-label">
+      <input id="dynamicThresholdControl" name="dynamicThresholdControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if dynamicThresholdControl %}checked="checked"{% endif %}>  Dynamiczny próg uruchomienia
+    </label>
+  </div>
+  <div class="form-group">
     <label for="pumpLaunchingTemperature">Temperatura załączenia pompki (0-100&#8451;)</label>
     <input id="pumpLaunchingTemperature" name="pumpLaunchingTemperature" type="number" class="form-control" placeholder="Temperatura (w &#8451;)" value="{{pumpLaunchingTemperature}}">
     {% if form.pumpLaunchingTemperature.errors %}
@@ -42,6 +47,15 @@
       {% endfor %}
     {% endif %}
   </div>
+  <div class="form-group">
+    <label for="dynamicLaunchingTemperature">Próg uruchomienia w stosunku do temperatury w zbiorniku</label>
+    <input id="dynamicLaunchingTemperature" name="dynamicLaunchingTemperature" type="number" class="form-control" placeholder="Wartość temperatury (10-40&#8451;)" value="{{dynamicLaunchingTemperature}}">
+    {% if form.dynamicLaunchingTemperature.errors %}
+      {% for error in form.dynamicLaunchingTemperature.errors %}
+          <small class="text-danger">{{ error }}</small>
+      {% endfor %}
+    {% endif %}
+  </div>
   <button type="submit" class="btn btn-danger">Zastosuj zmiany</button>
 </form>
 <br>
@@ -49,11 +63,38 @@
 <script>
   $(document).ready(function(){
     $("#automaticControl").bootstrapToggle()
-    rearrangeReadonlyFields(document.getElementById("automaticControl").checked)
+    rearrangeReadonlyFields(document.getElementById("automaticControl").checked);
+    onManualControlChange(document.getElementById("manualControl").checked);
     $("#automaticControl").change(function(){
       rearrangeReadonlyFields(document.getElementById("automaticControl").checked);
     })
+    $("#manualControl").change(function(){
+      onManualControlChange(document.getElementById("manualControl").checked);
+    })
   });
+
+  function onManualControlChange(isChanged) {
+    if (isChanged) {
+      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
+      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
+      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed"   
+      $("#dynamicThresholdControl").attr("data-onstyle", "light");
+      $("#dynamicThresholdControl").attr("data-offstyle", "light");
+      $('#dynamicThresholdControl').bootstrapToggle('off')
+      $('#dynamicThresholdControl').bootstrapToggle('disable')        
+      $("#dynamicThresholdControl").bootstrapToggle('destroy')
+      $("#dynamicThresholdControl").bootstrapToggle()
+    } else if (!isChanged) {
+      $("#dynamicLaunchingTemperature").removeAttr("readonly"); 
+      $("#dynamicLaunchingTemperature").removeAttr("onFocus"); 
+      document.getElementById("dynamicLaunchingTemperature").style.cursor = "text"
+      $('#dynamicThresholdControl').bootstrapToggle('enable')
+      $("#dynamicThresholdControl").attr("data-onstyle", "danger");
+      $("#dynamicThresholdControl").attr("data-offstyle", "success");
+      $("#dynamicThresholdControl").bootstrapToggle('destroy')
+      $("#dynamicThresholdControl").bootstrapToggle()
+    }
+  }
 
   // Function below needs to be redesigned - it looks horrible!
   function rearrangeReadonlyFields(isAuto) {
@@ -67,14 +108,22 @@
       $("#pumpLaunchingTemperature").removeAttr("readonly"); 
       $("#pumpLaunchingTemperature").removeAttr("onFocus"); 
       document.getElementById("pumpLaunchingTemperature").style.cursor = "text";
+      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
+      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
+      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed"      
       $("#manualControl").attr("data-onstyle", "light");
       $("#manualControl").attr("data-offstyle", "light");
       $('#manualControl').bootstrapToggle('off')
       $('#manualControl').bootstrapToggle('disable')        
       $("#manualControl").bootstrapToggle('destroy')
       $("#manualControl").bootstrapToggle()
-    } else if (!isAuto) {
-      $('#manualControl').bootstrapToggle('enable')
+      $("#dynamicThresholdControl").attr("data-onstyle", "light");
+      $("#dynamicThresholdControl").attr("data-offstyle", "light");
+      $('#dynamicThresholdControl').bootstrapToggle('off')
+      $('#dynamicThresholdControl').bootstrapToggle('disable')        
+      $("#dynamicThresholdControl").bootstrapToggle('destroy')
+      $("#dynamicThresholdControl").bootstrapToggle()
+    } else if (!isAuto) {      
       $("#temperatureReadInterval").attr("readonly", "");
       $("#temperatureReadInterval").attr("onFocus", "this.blur()")
       document.getElementById("temperatureReadInterval").style.cursor = "not-allowed";
@@ -84,10 +133,19 @@
       $("#pumpLaunchingTemperature").attr("readonly", ""); 
       $("#pumpLaunchingTemperature").attr("onFocus", "this.blur()")
       document.getElementById("pumpLaunchingTemperature").style.cursor = "not-allowed";   
+      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
+      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
+      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed" 
+      $('#manualControl').bootstrapToggle('enable')
       $("#manualControl").attr("data-onstyle", "danger");
       $("#manualControl").attr("data-offstyle", "success");
       $("#manualControl").bootstrapToggle('destroy')
       $("#manualControl").bootstrapToggle()
+      $('#dynamicThresholdControl').bootstrapToggle('enable')
+      $("#dynamicThresholdControl").attr("data-onstyle", "danger");
+      $("#dynamicThresholdControl").attr("data-offstyle", "success");
+      $("#dynamicThresholdControl").bootstrapToggle('destroy')
+      $("#dynamicThresholdControl").bootstrapToggle()
     }
   }
 </script>

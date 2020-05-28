@@ -90,34 +90,36 @@ def enable_pump():
         # Flag saying pump should be enabled
         if pumpEnabled and (currentRun - lastTimePumpDisabled > 10) and not previousState: # This condition is as follows: if pump should be enabled according to automatic mode or manual mode
             lastTimePumpEnabled = int(time.time())
-            previousState = True
-            pumpState = True
+            previousState = True            
             r.set('pump_state', 1) # Save to database, that pump is enabled
             # print("Pump state: ON")            
             if runningMode:
                 # ======================================================== RASPBERRY PI ONLY CODE ========================================================
                 if GPIO.input(11): # Ensure that pump is already stopped
                     GPIO.output(11, GPIO.LOW) # Enable electric power for pump
+                    pumpState = True
                     pauseAfterPumpStateChange(True)
                 # ========================================================================================================================================
             else:
                 print("Pump state: ON")
+                pumpState = True
                 pauseAfterPumpStateChange(True)
         if (not pumpEnabled) and (currentRun - lastTimePumpEnabled > 10) and previousState: # This condition is as follows: if pump should be disabled according to automatic mode and manual mode
             lastTimePumpDisabled = int(time.time())
-            previousState = False
-            pumpState = False
+            previousState = False            
             r.set('pump_state', 0) # Save to database, that pump is disabled            
             if runningMode:
                 # ======================================================== RASPBERRY PI ONLY CODE ========================================================
                 if not GPIO.input(11): # Ensure that pump is already running
                     GPIO.output(11, GPIO.HIGH) # Disable electric power for pump
+                    pumpState = False
                     temperatureFlag = 0
                     highest_temperature = 0
                     pauseAfterPumpStateChange(False)                    
                 # ========================================================================================================================================
             else:
                 print("Pump state: OFF")
+                pumpState = False
                 temperatureFlag = 0
                 highest_temperature = 0
                 pauseAfterPumpStateChange(False)                
@@ -153,7 +155,7 @@ def read_temperature_from_sensors():
                 current_measurement = left
             r.set('left_sensor_temperature', left)
         except:
-            r.set('left_sensor_temperature', "Czujnik prawy nie odpowiada!")
+            r.set('left_sensor_temperature', "Czujnik lewy nie odpowiada!")
             resetW1()
         # Read temperatures from the middle sensor
         try:
@@ -166,7 +168,7 @@ def read_temperature_from_sensors():
             resetW1()
         # Read temperatures from the right sensor
         try:
-            right = getSensorTemperature("030797798612")
+            right = getSensorTemperature("0307977948d5")
             if right > current_measurement:
                 current_measurement = right
             r.set('right_sensor_temperature', right)
@@ -240,8 +242,8 @@ def should_pump_be_enabled(left, middle, right, launching):
         return True;
         
     if str_to_bool(r.get('dynamicThresholdControl')):
-        thresholdValue = isNumber(r.get('tank_sensor_temperature')) + int(r.get('dynamicLaunchingTemperature')) # Find dynamically temperature by which the pump is launched (for example run pump, when the absorber heats 20 Celsius degree more than the water temperature in tank)
-        return left >= thresholdValue or middle >= thresholdValue or right >= thresholdValue
+        thresholdValue = int(isNumber(r.get('tank_sensor_temperature'))) + int(r.get('dynamicLaunchingTemperature')) # Find dynamically temperature by which the pump is launched (for example run pump, when the absorber heats 20 Celsius degree more than the water temperature in tank)
+        return left >= thresholdValue or middle >= thresholdValue or right >= thresholdValue or (left >= launching or middle >= launching or right >= launching)
 
 def isNumber(item):
     try:
@@ -292,6 +294,8 @@ if runningMode:
 else:
     print('Started backend in DEVELOPMENT mode')
     gen = generateMockTemperature() # Generate mock temperature
+    print(isNumber(r.get('tank_sensor_temperature')))
+    print(isNumber(r.get('tank_sensor_temperature')) + int(r.get('dynamicLaunchingTemperature')))
 
 # Launch new thread for pump control
 thread = threading.Thread(target=enable_pump, args=())

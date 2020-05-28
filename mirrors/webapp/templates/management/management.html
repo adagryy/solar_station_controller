@@ -1,5 +1,10 @@
 {% extends "mainView.html" %}
 {% block content %}
+<!-- Loading static files for this template only -->
+{% load static %}
+<script src="{% static "css/bootstrap/js/bootstrap.min.js" %}"></script>  
+<script src="{% static "js/bootstrap4-toggle.min.js" %}"></script>  
+<link rel="stylesheet" href="{% static "css/bootstrap-toogle/css/bootstrap4-toggle.min.css" %}">
 <br>
 <hr style="margin-bottom:5px !important; margin-top:5px !important; " />
 <h2>Zarządzanie pracą</h2>
@@ -7,17 +12,17 @@
   {% csrf_token %}
   <div class="form-group">
     <label class="form-check-label">
-      <input id="automaticControl" name="automaticControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if automaticControl %}checked="checked"{% endif %}>  Sterowanie automatyczne
+      <input id="automaticControl" name="automaticControl" type="checkbox" {% if automaticControl %}checked="checked"{% endif %}>  Sterowanie automatyczne
     </label>
   </div>
   <div class="form-group">
     <label class="form-check-label">
-      <input id="manualControl" name="manualControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if manualControl %}checked="checked"{% endif %}>  Włącznik pompki
+      <input id="manualControl" name="manualControl" type="checkbox" {% if manualControl %}checked="checked"{% endif %}>  Włącznik pompki
     </label>
   </div>
   <div class="form-group">
     <label class="form-check-label">
-      <input id="dynamicThresholdControl" name="dynamicThresholdControl" type="checkbox" data-toggle="toggle" data-onstyle="danger" data-offstyle="success" {% if dynamicThresholdControl %}checked="checked"{% endif %}>  Dynamiczny próg uruchomienia
+      <input id="dynamicThresholdControl" name="dynamicThresholdControl" type="checkbox" {% if dynamicThresholdControl %}checked="checked"{% endif %}>  Dynamiczny próg uruchomienia
     </label>
   </div>
   <div class="form-group">
@@ -61,92 +66,102 @@
 <br>
 <hr style="margin-bottom:5px !important; margin-top:5px !important; " />
 <script>
+  // ---------------------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------------------
+  // Bootstrap Toggle library used below is taken from https://gitbrent.github.io/bootstrap4-toggle/
+  // ---------------------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------------------------------------
+
   $(document).ready(function(){
-    $("#automaticControl").bootstrapToggle()
-    rearrangeReadonlyFields(document.getElementById("automaticControl").checked);
-    onManualControlChange(document.getElementById("manualControl").checked);
-    $("#automaticControl").change(function(){
-      rearrangeReadonlyFields(document.getElementById("automaticControl").checked);
-    })
-    $("#manualControl").change(function(){
-      onManualControlChange(document.getElementById("manualControl").checked);
-    })
+    $("#automaticControl").bootstrapToggle({
+      onstyle: 'danger',
+      offstyle: 'success'
+    });
+
+    $("#manualControl").bootstrapToggle({
+      onstyle: 'danger',
+      offstyle: 'success'
+    });
+
+    $("#dynamicThresholdControl").bootstrapToggle({
+      onstyle: 'danger',
+      offstyle: 'success'
+    });
+
+    onAutomaticControlToggleChange(document.getElementById("automaticControl").checked);
+    onManualControlToggleChange(document.getElementById("manualControl").checked);
+    onDynamicThresholdControlChange(document.getElementById("dynamicThresholdControl").checked);
+    
+    $("#automaticControl").change(function() {
+      onAutomaticControlToggleChange(document.getElementById("automaticControl").checked);
+    });
+
+    $("#manualControl").change(function() {
+      onManualControlToggleChange(document.getElementById("manualControl").checked);
+    });
+
+    $("#dynamicThresholdControl").change(function() {
+      onDynamicThresholdControlChange(document.getElementById("dynamicThresholdControl").checked);
+    });
   });
 
-  function onManualControlChange(isChanged) {
-    if (isChanged) {
-      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
-      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
-      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed"   
-      $("#dynamicThresholdControl").attr("data-onstyle", "light");
-      $("#dynamicThresholdControl").attr("data-offstyle", "light");
-      $('#dynamicThresholdControl').bootstrapToggle('off')
-      $('#dynamicThresholdControl').bootstrapToggle('disable')        
-      $("#dynamicThresholdControl").bootstrapToggle('destroy')
-      $("#dynamicThresholdControl").bootstrapToggle()
-    } else if (!isChanged) {
-      $("#dynamicLaunchingTemperature").removeAttr("readonly"); 
-      $("#dynamicLaunchingTemperature").removeAttr("onFocus"); 
-      document.getElementById("dynamicLaunchingTemperature").style.cursor = "text"
-      $('#dynamicThresholdControl').bootstrapToggle('enable')
-      $("#dynamicThresholdControl").attr("data-onstyle", "danger");
-      $("#dynamicThresholdControl").attr("data-offstyle", "success");
-      $("#dynamicThresholdControl").bootstrapToggle('destroy')
-      $("#dynamicThresholdControl").bootstrapToggle()
+  function onAutomaticControlToggleChange(value) {
+    if (value) {        
+      disableToogle('manualControl');
+      disableToogle('dynamicThresholdControl');
+      enableNumericField('pumpLaunchingTemperature');
+      enableNumericField('pumpWorkingTime');
+      enableNumericField('temperatureReadInterval');
+      disableNumericField('dynamicLaunchingTemperature');
+    } else if (!value) {   
+      enableToogle('manualControl');
+      enableToogle('dynamicThresholdControl');
+      disableNumericField('pumpLaunchingTemperature');
+      disableNumericField('pumpWorkingTime');
+      disableNumericField('temperatureReadInterval');
+      disableNumericField('dynamicLaunchingTemperature');   
     }
   }
 
-  // Function below needs to be redesigned - it looks horrible!
-  function rearrangeReadonlyFields(isAuto) {
-    if (!!isAuto) {        
-      $("#temperatureReadInterval").removeAttr("readonly");
-      $("#temperatureReadInterval").removeAttr("onFocus");
-      document.getElementById("temperatureReadInterval").style.cursor = "text";
-      $("#pumpWorkingTime").removeAttr("readonly"); 
-      $("#pumpWorkingTime").removeAttr("onFocus"); 
-      document.getElementById("pumpWorkingTime").style.cursor = "text";
-      $("#pumpLaunchingTemperature").removeAttr("readonly"); 
-      $("#pumpLaunchingTemperature").removeAttr("onFocus"); 
-      document.getElementById("pumpLaunchingTemperature").style.cursor = "text";
-      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
-      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
-      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed"      
-      $("#manualControl").attr("data-onstyle", "light");
-      $("#manualControl").attr("data-offstyle", "light");
-      $('#manualControl').bootstrapToggle('off')
-      $('#manualControl').bootstrapToggle('disable')        
-      $("#manualControl").bootstrapToggle('destroy')
-      $("#manualControl").bootstrapToggle()
-      $("#dynamicThresholdControl").attr("data-onstyle", "light");
-      $("#dynamicThresholdControl").attr("data-offstyle", "light");
-      $('#dynamicThresholdControl').bootstrapToggle('off')
-      $('#dynamicThresholdControl').bootstrapToggle('disable')        
-      $("#dynamicThresholdControl").bootstrapToggle('destroy')
-      $("#dynamicThresholdControl").bootstrapToggle()
-    } else if (!isAuto) {      
-      $("#temperatureReadInterval").attr("readonly", "");
-      $("#temperatureReadInterval").attr("onFocus", "this.blur()")
-      document.getElementById("temperatureReadInterval").style.cursor = "not-allowed";
-      $("#pumpWorkingTime").attr("readonly", ""); 
-      $("#pumpWorkingTime").attr("onFocus", "this.blur()")
-      document.getElementById("pumpWorkingTime").style.cursor = "not-allowed";
-      $("#pumpLaunchingTemperature").attr("readonly", ""); 
-      $("#pumpLaunchingTemperature").attr("onFocus", "this.blur()")
-      document.getElementById("pumpLaunchingTemperature").style.cursor = "not-allowed";   
-      $("#dynamicLaunchingTemperature").attr("readonly", ""); 
-      $("#dynamicLaunchingTemperature").attr("onFocus", "this.blur()")
-      document.getElementById("dynamicLaunchingTemperature").style.cursor = "not-allowed" 
-      $('#manualControl').bootstrapToggle('enable')
-      $("#manualControl").attr("data-onstyle", "danger");
-      $("#manualControl").attr("data-offstyle", "success");
-      $("#manualControl").bootstrapToggle('destroy')
-      $("#manualControl").bootstrapToggle()
-      $('#dynamicThresholdControl').bootstrapToggle('enable')
-      $("#dynamicThresholdControl").attr("data-onstyle", "danger");
-      $("#dynamicThresholdControl").attr("data-offstyle", "success");
-      $("#dynamicThresholdControl").bootstrapToggle('destroy')
-      $("#dynamicThresholdControl").bootstrapToggle()
+  function onManualControlToggleChange(value) {
+    if (value) {
+      disableToogle('dynamicThresholdControl');
+    } else if (!value && !document.getElementById("automaticControl").checked) {
+      enableToogle('dynamicThresholdControl');
     }
+  }
+
+  function onDynamicThresholdControlChange(value) {
+    if (value) {
+      enableNumericField('dynamicLaunchingTemperature');
+    } else if (!value) {
+      disableNumericField('dynamicLaunchingTemperature');
+    }
+  }
+
+  function disableToogle(toogleButtonId) {
+    $('#' + toogleButtonId).bootstrapToggle('off');
+    $('#' + toogleButtonId).bootstrapToggle('disable');
+    // document.getElementById(toogleButtonId).style.cursor = "not-allowed";  
+  }
+
+  function enableToogle(toogleButtonId) {
+    $('#' + toogleButtonId).bootstrapToggle('enable');
+    // document.getElementById(toogleButtonId).style.cursor = "not-allowed";
+  }
+
+  function disableNumericField(toogleButtonId) {
+    $('#' + toogleButtonId).attr("readonly", ""); // Set field as readonly
+    $('#' + toogleButtonId).attr("onFocus", "this.blur()") // Disable focus feature when user clicks on disabled field
+    document.getElementById(toogleButtonId).style.cursor = "not-allowed"; // When cursor is above field, change cursor type as "not allowed"
+  }
+
+  function enableNumericField(toogleButtonId) {
+    $('#' + toogleButtonId).removeAttr("readonly");
+    $('#' + toogleButtonId).removeAttr("onFocus");
+    document.getElementById(toogleButtonId).style.cursor = "text";
   }
 </script>
 {% endblock %}

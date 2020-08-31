@@ -22,6 +22,8 @@ insertQuery = "INSERT INTO  webapp_temperature (\"leftSensorTemperature\", \"mid
 pumpEnabled = False
 pumpState = False
 
+lastSave = 0
+
 runningMode = '' # Decides if app should run in production mode (on Raspberry PI hardware) or in development mode (machines without real, but mocked GPIO, sensors etc)
 startTime = int(time.time()) # Get application start time
 
@@ -133,7 +135,6 @@ def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was e
 # Reads temperatures from sensors in its own thread
 def read_temperature_from_sensors():
     t = threading.currentThread()
-    lastSave = 0
     while getattr(t, "should_still_be_running", True):
         pauseSensorReadings()       
         # Read temperature from the left sensor       
@@ -169,6 +170,7 @@ def read_temperature_from_sensors():
 
 def saveTemperaturesToDatabase():
     moduloInterval = 5 # Save readings to database every 5 minutes
+    global lastSave
 
     if datetime.datetime.now().hour >= 23 or datetime.datetime.now().hour < 7:
         moduloInterval = 30 # ...but at night (23:00 to 7:00) save to database every 30 minutes

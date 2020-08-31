@@ -22,12 +22,6 @@ insertQuery = "INSERT INTO  webapp_temperature (\"leftSensorTemperature\", \"mid
 pumpEnabled = False
 pumpState = False
 
-temperatureFlag = 0 # Watches the temperature from sensors. A method observes a value in this variable and it should constantly be rising. 
-                    # in case when the decreasing value is detected it means, that sun has been covered by clouds, so if the temperature reached suitable value in the absorber then pump should be enabled.
-                    # For example: values should rise and when this variable has greater value than any of sensors it means pump should be run
-
-highest_temperature = 0                    
-
 runningMode = '' # Decides if app should run in production mode (on Raspberry PI hardware) or in development mode (machines without real, but mocked GPIO, sensors etc)
 startTime = int(time.time()) # Get application start time
 
@@ -80,7 +74,7 @@ def enable_pump():
     currentRun = lastTimePumpEnabled = 0 #  lastTimePumpEnabled - remember, when pump was last time enabled - it can change state at least 10s from previous state change.
     lastTimePumpDisabled = int(time.time())
     previousState = False # Initial state of the pump (False = pump disabled, True = pump enabled)
-    global temperatureFlag, highest_temperature, pumpState
+    global pumpState
     r.set('pump_state', 0) # This prevents from errors if script was terminated during pump is working
     t = threading.currentThread()
     while getattr(t, "should_still_be_running", True):
@@ -113,15 +107,11 @@ def enable_pump():
                 if not GPIO.input(11): # Ensure that pump is already running
                     GPIO.output(11, GPIO.HIGH) # Disable electric power for pump
                     pumpState = False
-                    temperatureFlag = 0
-                    highest_temperature = 0
                     pauseAfterPumpStateChange(False)                    
                 # ========================================================================================================================================
             else:
                 print("Pump state: OFF")
                 pumpState = False
-                temperatureFlag = 0
-                highest_temperature = 0
                 pauseAfterPumpStateChange(False)                
 
 
@@ -144,24 +134,18 @@ def pauseAfterPumpStateChange(stateChange): # stateChange: true means pump was e
 def read_temperature_from_sensors():
     t = threading.currentThread()
     lastSave = 0
-    global highest_temperature
     while getattr(t, "should_still_be_running", True):
-        time.sleep(1)
-        current_measurement = 0 # Holds the greatest measurement temperature from one session (reading all sensors at once - meaning which sensor detects the greatest temperature)   
+        pauseSensorReadings()       
         # Read temperature from the left sensor       
         try:
-            left = getSensorTemperature("0301977967aa")
-            if left > current_measurement:
-                current_measurement = left
+            left = getSensorTemperature("030797798ac5")
             r.set('left_sensor_temperature', left)
         except:
             r.set('left_sensor_temperature', "Czujnik lewy nie odpowiada!")
             resetW1()
         # Read temperatures from the middle sensor
         try:
-            middle = getSensorTemperature("030797798ac5")
-            if middle > current_measurement:
-                current_measurement = middle
+            middle = getSensorTemperature("030797794995")
             r.set('middle_sensor_temperature', middle)
         except:
             r.set('middle_sensor_temperature', "Czujnik środkowy nie odpowiada!")
@@ -169,8 +153,6 @@ def read_temperature_from_sensors():
         # Read temperatures from the right sensor
         try:
             right = getSensorTemperature("0307977948d5")
-            if right > current_measurement:
-                current_measurement = right
             r.set('right_sensor_temperature', right)
         except:
             r.set('right_sensor_temperature', "Czujnik prawy nie odpowiada!")
@@ -182,20 +164,32 @@ def read_temperature_from_sensors():
             r.set('tank_sensor_temperature', "Czujnik w zbiorniku nie odpowiada!")
             resetW1()
 
-        highest_temperature = current_measurement   # save the greatest measurement from 
-                                                    # current session as highest measured temperature. 
-                                                    # Later it will be used to figure out whether 
-                                                    # temperature increases (sunny sky) or decreases (cloud cover)
         # Save temperatures to database once per every even minutes
-        if datetime.datetime.now().minute % 5 == 0 and (int(time.time()) - lastSave > 60):            
-            left = isNumber(r.get('left_sensor_temperature'))
-            middle = isNumber(r.get('middle_sensor_temperature'))
-            right = isNumber(r.get('right_sensor_temperature'))
-            tank = isNumber(r.get('tank_sensor_temperature'))
-            if left > -1000 and middle > -1000 and right > -1000 and tank > -1000:
-                lastSave = int(time.time())
-                cursor.execute(insertQuery, (left, middle, right, tank, datetime.datetime.now()))
-                connection.commit()
+        saveTemperaturesToDatabase()
+
+def saveTemperaturesToDatabase():
+    moduloInterval = 5 # Save readings to database every 5 minutes
+
+    if datetime.datetime.now().hour >= 23 or datetime.datetime.now().hour < 7:
+        moduloInterval = 30 # ...but at night (23:00 to 7:00) save to database every 30 minutes
+
+    # Save temperatures to database once per every even minutes
+    if datetime.datetime.now().minute % moduloInterval == 0 and (int(time.time()) - lastSave > 60):            
+        left = isNumber(r.get('left_sensor_temperature'))
+        middle = isNumber(r.get('middle_sensor_temperature'))
+        right = isNumber(r.get('right_sensor_temperature'))
+        tank = isNumber(r.get('tank_sensor_temperature'))
+        if left > -1000 and middle > -1000 and right > -1000 and tank > -1000:
+            lastSave = int(time.time())
+            cursor.execute(insertQuery, (left, middle, right, tank, datetime.datetime.now()))
+            connection.commit()
+
+def pauseSensorReadings():
+    currentHour = datetime.datetime.now().hour
+    if currentHour >= 7 and currentHour <= 23:
+        time.sleep(int(r.get('temperatureReadInterval')))
+    else:
+        time.sleep(1799) # During night pause readings for half hour (30min = 1800s)
 
 def getSensorTemperature(sensorId):
     if runningMode:
@@ -227,20 +221,17 @@ def resetW1():
         # ========================================================================================================================================
    
 # Decides if pump should be enabled
-def should_pump_be_enabled(left, middle, right, launching):
-    global temperatureFlag # highest_temperature represents highest temperature from ABSORBER sensors
+def should_pump_be_enabled(left, middle, right, launching):    
+    if str_to_bool(r.get('manualControl')):
+        return True;
 
-    if highest_temperature > temperatureFlag:
-        temperatureFlag = highest_temperature;
-    elif not pumpState and temperatureFlag - highest_temperature > 0.5 and temperatureFlag > isNumber(r.get('tank_sensor_temperature')) + 15: # If 0.5 Celsius degree temperature drop has been detected and pump is stopped, then return "True" so that pump managing thread knows to start the pump
-        return True # This happens when the sun will be temporarily covered by clouds and pump will be run even before reaching launching temperature. The only restriction is that absorber temperature must be at least 15 Celsius degrees more than temperature in water tank
+    currentHour = datetime.datetime.now().hour # During night pump should be definitely disabled
+    if currentHour >= 17 and currentHour <= 9:
+        return False 
 
     if str_to_bool(r.get('automaticControl')):
         return (left >= launching or middle >= launching or right >= launching) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
-
-    if str_to_bool(r.get('manualControl')):
-        return True;
-        
+            
     if str_to_bool(r.get('dynamicThresholdControl')):
         thresholdValue = int(isNumber(r.get('tank_sensor_temperature'))) + int(r.get('dynamicLaunchingTemperature')) # Find dynamically temperature by which the pump is launched (for example run pump, when the absorber heats 20 Celsius degree more than the water temperature in tank)
         return left >= thresholdValue or middle >= thresholdValue or right >= thresholdValue or (left >= launching or middle >= launching or right >= launching)
@@ -312,7 +303,7 @@ signal.signal(signal.SIGHUP, handleStopSignalsOrKeyboardInterrupt)
 try:
     while True:
         # Reading delay
-        time.sleep(int(r.get('temperatureReadInterval')))
+        time.sleep(1)
 
         # Get the pump launching temperature; if absorber exceeds this temperature, pump then is launched
         pump_launching_temperature = int(r.get('pumpLaunchingTemperature'))

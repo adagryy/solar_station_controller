@@ -172,8 +172,8 @@ def saveTemperaturesToDatabase():
     moduloInterval = 5 # Save readings to database every 5 minutes
     global lastSave
 
-    if datetime.datetime.now().hour >= 23 or datetime.datetime.now().hour < 7:
-        moduloInterval = 30 # ...but at night (23:00 to 7:00) save to database every 30 minutes
+    # if datetime.datetime.now().hour >= 23 or datetime.datetime.now().hour < 7:
+    #     moduloInterval = 30 # ...but at night (23:00 to 7:00) save to database every 30 minutes
 
     # Save temperatures to database once per every even minutes
     if datetime.datetime.now().minute % moduloInterval == 0 and (int(time.time()) - lastSave > 60):            
@@ -191,7 +191,7 @@ def pauseSensorReadings():
     if currentHour >= 7 and currentHour <= 23:
         time.sleep(int(r.get('temperatureReadInterval')))
     else:
-        time.sleep(1799) # During night pause readings for half hour (30min = 1800s)
+        time.sleep(240) # During night pause readings for 240 seconds
 
 def getSensorTemperature(sensorId):
     if runningMode:
@@ -235,7 +235,10 @@ def should_pump_be_enabled(left, middle, right, launching):
         return (left >= launching or middle >= launching or right >= launching) # Check, if pump should be launched depending on temperature measurement and only in automatic mode pump can be enabled automatically
             
     if str_to_bool(r.get('dynamicThresholdControl')):
-        thresholdValue = int(isNumber(r.get('tank_sensor_temperature'))) + int(r.get('dynamicLaunchingTemperature')) # Find dynamically temperature by which the pump is launched (for example run pump, when the absorber heats 20 Celsius degree more than the water temperature in tank)
+        tankTemperature = int(isNumber(r.get('tank_sensor_temperature')))
+        if tankTemperature == -1000
+            return False
+        thresholdValue = tankTemperature + int(r.get('dynamicLaunchingTemperature')) # Find dynamically temperature by which the pump is launched (for example run pump, when the absorber heats 20 Celsius degree more than the water temperature in tank)
         return left >= thresholdValue or middle >= thresholdValue or right >= thresholdValue or (left >= launching or middle >= launching or right >= launching)
 
 def isNumber(item):

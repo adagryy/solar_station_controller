@@ -287,6 +287,7 @@ if runningMode:
     GPIO.setup(11, GPIO.OUT, initial=GPIO.HIGH)
     GPIO.setup(12, GPIO.OUT, initial=GPIO.HIGH)
     GPIO.setup(13, GPIO.OUT, initial=GPIO.HIGH)
+    # ========================================================================================================================================
 else:
     print('Started backend in DEVELOPMENT mode')
     gen = generateMockTemperature() # Generate mock temperature
